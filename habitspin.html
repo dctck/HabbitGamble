@@ -1,0 +1,2086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>HabitSpin</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#07080f;
+  --card:#0e1020;
+  --card2:#131628;
+  --border:rgba(255,255,255,0.07);
+  --gold:#f8b722;
+  --gold2:#ffd666;
+  --mint:#00e5a0;
+  --red:#f0484a;
+  --orange:#f97316;
+  --blue:#4b7cf7;
+  --purple:#a259f7;
+  --pink:#f759a2;
+  --green:#22c55e;
+  --text:#eef0f8;
+  --muted:#5a607a;
+  --radius:20px;
+}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Syne',sans-serif;
+  max-width:430px;
+  margin:0 auto;
+  min-height:100vh;
+  overflow-x:hidden;
+  position:relative;
+  user-select:none;
+  -webkit-user-select:none;
+}
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(75,124,247,0.12),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 100%,rgba(162,89,247,0.08),transparent);
+  pointer-events:none;
+  z-index:0;
+}
+.screen{display:none;flex-direction:column;min-height:100vh;position:relative;z-index:1;}
+.screen.active{display:flex;}
+
+/* TYPOGRAPHY */
+.mono{font-family:'Space Mono',monospace;}
+h1{font-size:2rem;font-weight:800;letter-spacing:-0.02em;}
+h2{font-size:1.4rem;font-weight:700;}
+
+/* CARDS */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:16px;
+}
+.card2{
+  background:var(--card2);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px 14px;
+}
+
+/* BUTTONS */
+.btn{
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:700;
+  border:none;cursor:pointer;border-radius:50px;
+  transition:transform 0.12s,opacity 0.12s,box-shadow 0.12s;
+  outline:none;
+}
+.btn:active{transform:scale(0.94);}
+.btn-primary{
+  background:linear-gradient(135deg,var(--mint),#00b87a);
+  color:#000;padding:16px 28px;font-size:1rem;
+  box-shadow:0 0 30px rgba(0,229,160,0.3);
+}
+.btn-primary:hover{box-shadow:0 0 40px rgba(0,229,160,0.5);}
+.btn-primary:disabled{opacity:0.3;cursor:not-allowed;transform:none;}
+.btn-gold{
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:#000;padding:16px 28px;font-size:1rem;
+  box-shadow:0 0 30px rgba(248,183,34,0.35);
+}
+.btn-sm{padding:8px 16px;font-size:0.75rem;}
+.btn-ghost{background:rgba(255,255,255,0.07);color:var(--text);padding:10px 18px;font-size:0.8rem;}
+.btn-danger{background:var(--red);color:#fff;padding:14px 24px;font-size:0.9rem;}
+
+/* TOP BAR */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px 8px;
+  position:sticky;top:0;z-index:10;
+  background:linear-gradient(var(--bg) 80%,transparent);
+}
+.back-btn{
+  width:40px;height:40px;background:var(--card2);border:1px solid var(--border);
+  border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:0.75rem;font-weight:700;cursor:pointer;transition:background 0.2s;
+  color:var(--text);
+}
+.back-btn:active{background:var(--card);}
+
+/* JAR */
+.jar-wrap{position:relative;width:64px;height:80px;flex-shrink:0;}
+.jar-svg{width:64px;height:80px;}
+.jar-fill{
+  transition:height 0.8s cubic-bezier(0.34,1.56,0.64,1),
+             y 0.8s cubic-bezier(0.34,1.56,0.64,1);
+}
+.jar-label{position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);
+  font-size:0.6rem;font-weight:700;color:var(--gold);white-space:nowrap;letter-spacing:0.05em;text-transform:uppercase;}
+
+/* CLIP */
+.clip{
+  width:36px;height:50px;position:relative;flex-shrink:0;
+  cursor:grab;transition:transform 0.15s;
+  touch-action:none;
+}
+.clip:active{cursor:grabbing;transform:scale(1.2);}
+.clip svg{width:100%;height:100%;filter:drop-shadow(0 2px 6px currentColor);}
+.clip-red{color:#ef4444;} .clip-blue{color:#3b82f6;} .clip-green{color:#22c55e;}
+.clip-orange{color:#f97316;} .clip-purple{color:#a855f7;} .clip-pink{color:#ec4899;}
+.clip-gold{color:#f8b722;animation:goldPulse 1.5s ease-in-out infinite;}
+@keyframes goldPulse{0%,100%{filter:drop-shadow(0 2px 8px #f8b722) brightness(1);}50%{filter:drop-shadow(0 4px 16px #ffdd44) brightness(1.3);}}
+
+/* DRAG GHOST */
+#drag-ghost{
+  position:fixed;pointer-events:none;z-index:9999;
+  opacity:0.85;transform:scale(1.15) rotate(10deg);
+  transition:transform 0.1s;
+}
+
+/* DROP ZONE */
+.drop-zone{
+  border:2px dashed rgba(0,229,160,0.3);
+  border-radius:16px;padding:16px;
+  min-height:80px;
+  transition:all 0.2s;
+  display:flex;align-items:center;gap:8px;
+  flex-wrap:wrap;
+  position:relative;
+}
+.drop-zone.over{border-color:var(--mint);background:rgba(0,229,160,0.06);box-shadow:0 0 20px rgba(0,229,160,0.1);}
+.drop-zone-hint{color:var(--muted);font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin:auto;}
+
+/* TIER BADGE */
+.tier-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 14px;border-radius:50px;
+  font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;
+}
+.tier-1{background:rgba(240,72,74,0.15);color:var(--red);border:1px solid rgba(240,72,74,0.3);}
+.tier-2{background:rgba(249,115,22,0.15);color:var(--orange);border:1px solid rgba(249,115,22,0.3);}
+.tier-3{background:rgba(75,124,247,0.15);color:var(--blue);border:1px solid rgba(75,124,247,0.3);}
+.tier-jackpot{background:rgba(248,183,34,0.15);color:var(--gold);border:1px solid rgba(248,183,34,0.3);}
+.tier-bonus{background:rgba(162,89,247,0.15);color:var(--purple);border:1px solid rgba(162,89,247,0.3);}
+
+/* HABIT CARD */
+.habit-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:18px;padding:16px;
+  display:flex;align-items:center;gap:14px;
+  transition:all 0.2s;cursor:pointer;
+}
+.habit-card:active{transform:scale(0.97);}
+.habit-card.done{opacity:0.5;border-color:rgba(0,229,160,0.2);background:rgba(0,229,160,0.04);}
+.habit-icon{
+  width:48px;height:48px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;
+}
+.habit-check{
+  width:26px;height:26px;border-radius:50%;border:2px solid var(--border);
+  margin-left:auto;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:0.9rem;transition:all 0.2s;
+}
+.habit-card.done .habit-check{background:var(--mint);border-color:var(--mint);color:#000;}
+
+/* PROGRESS BAR */
+.progress-bar{height:6px;background:rgba(255,255,255,0.07);border-radius:100px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:100px;transition:width 0.6s cubic-bezier(0.34,1.56,0.64,1);}
+
+/* WHEEL CANVAS */
+#wheelCanvas{
+  border-radius:50%;display:block;margin:0 auto;
+  filter:drop-shadow(0 0 30px rgba(0,0,0,0.8));
+}
+.wheel-pointer{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-183px);
+  width:0;height:0;
+  border-left:12px solid transparent;border-right:12px solid transparent;
+  border-top:22px solid #fff;
+  filter:drop-shadow(0 2px 8px rgba(0,0,0,0.8));
+  z-index:5;
+}
+.wheel-center{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:36px;height:36px;border-radius:50%;
+  background:#0a0b12;border:3px solid rgba(255,255,255,0.2);
+  z-index:5;
+}
+
+/* ANIMATIONS */
+@keyframes pop{0%{transform:scale(0.5) rotate(-20deg);opacity:0;}70%{transform:scale(1.2) rotate(5deg);}100%{transform:scale(1) rotate(0deg);opacity:1;}}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+@keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-5px);}80%{transform:translateX(5px);}}
+@keyframes glow{0%,100%{box-shadow:0 0 20px rgba(0,229,160,0.3);}50%{box-shadow:0 0 50px rgba(0,229,160,0.6);}}
+@keyframes confettiFall{to{transform:translateY(110vh) rotate(720deg);opacity:0;}}
+@keyframes nearMissShake{0%,100%{transform:translateX(0);}25%{transform:translateX(-3px);}75%{transform:translateX(3px);}}
+@keyframes resultReveal{0%{transform:scale(0.3);opacity:0;}60%{transform:scale(1.15);}100%{transform:scale(1);opacity:1;}}
+@keyframes bonusPulse{0%,100%{transform:scale(1);text-shadow:0 0 20px var(--purple);}50%{transform:scale(1.05);text-shadow:0 0 40px var(--purple),0 0 60px rgba(162,89,247,0.5);}}
+@keyframes timerTick{0%{transform:scale(1);}50%{transform:scale(1.08);}100%{transform:scale(1);}}
+
+/* TIMER */
+.timer-display{
+  font-family:'Space Mono',monospace;font-size:3.5rem;font-weight:700;
+  color:var(--text);letter-spacing:0.04em;
+}
+.timer-display.urgent{color:var(--red);animation:timerTick 1s ease-in-out infinite;}
+
+/* REWARD RESULT */
+.result-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(7,8,15,0.92);
+  backdrop-filter:blur(20px);
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  gap:24px;padding:32px;
+}
+.result-overlay.active{display:flex;}
+.result-emoji{font-size:5rem;animation:pop 0.5s cubic-bezier(0.34,1.56,0.64,1);}
+.result-title{font-size:2.5rem;font-weight:800;text-align:center;animation:slideUp 0.4s 0.2s both;}
+.result-reward{
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:20px;padding:20px 28px;
+  text-align:center;animation:slideUp 0.4s 0.35s both;
+  width:100%;max-width:300px;
+}
+
+/* NEAR MISS */
+.near-miss-text{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-size:2rem;font-weight:800;color:var(--red);
+  z-index:300;pointer-events:none;text-align:center;
+  animation:pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  text-shadow:0 0 20px var(--red);
+}
+
+/* SCROLL HORIZONTAL */
+.scroll-h{
+  display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.scroll-h::-webkit-scrollbar{display:none;}
+
+/* STREAK */
+.streak-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:4px 10px;border-radius:50px;
+  background:rgba(248,183,34,0.12);color:var(--gold);
+  font-size:0.7rem;font-weight:700;border:1px solid rgba(248,183,34,0.2);
+}
+
+/* NOTIFICATION TOAST */
+#toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--card2);border:1px solid var(--border);
+  border-radius:50px;padding:10px 20px;
+  font-size:0.8rem;font-weight:600;z-index:1000;
+  transition:all 0.3s;opacity:0;pointer-events:none;
+  white-space:nowrap;max-width:90%;
+}
+#toast.show{opacity:1;}
+
+/* CLIP EARNED POPUP */
+.clip-earned-popup{
+  position:fixed;top:50%;left:50%;
+  transform:translate(-50%,-50%) scale(0.5);
+  z-index:500;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  opacity:0;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  text-align:center;
+}
+.clip-earned-popup.show{transform:translate(-50%,-50%) scale(1);opacity:1;}
+.clip-earned-popup.hide{transform:translate(-50%,-180%) scale(0.7);opacity:0;}
+
+/* SETUP */
+.setup-input{
+  width:100%;background:var(--card2);border:1px solid var(--border);
+  border-radius:12px;padding:14px 16px;
+  color:var(--text);font-family:'Syne',sans-serif;font-size:0.9rem;
+  outline:none;transition:border-color 0.2s;
+}
+.setup-input:focus{border-color:var(--mint);}
+.setup-label{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:6px;}
+
+/* BONUS WHEEL */
+#bonusCanvas{display:block;margin:0 auto;}
+
+/* SPINS LEFT */
+.spins-left{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 14px;border-radius:50px;
+  background:rgba(255,255,255,0.05);border:1px solid var(--border);
+  font-size:0.75rem;font-weight:600;color:var(--muted);
+}
+.spins-left span{color:var(--text);font-weight:800;}
+
+/* CONFETTI */
+.confetti-piece{
+  position:fixed;width:10px;height:10px;
+  border-radius:2px;pointer-events:none;z-index:999;
+  animation:confettiFall 3s ease-in forwards;
+}
+
+/* MILESTONES */
+.milestone-line{
+  position:absolute;left:0;right:0;
+  display:flex;align-items:center;gap:6px;
+}
+.milestone-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+/* NAV DOTS */
+.nav-dots{display:flex;gap:6px;justify-content:center;padding:8px;}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);transition:all 0.2s;}
+.nav-dot.active{background:var(--mint);width:18px;border-radius:3px;}
+
+/* Match indicator */
+.match-indicator{
+  padding:8px 14px;border-radius:10px;font-size:0.72rem;font-weight:700;
+  text-align:center;transition:all 0.3s;
+}
+
+/* Shimmer on cards */
+@keyframes shimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
+.shimmer{
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.04),transparent);
+  background-size:200% 100%;
+  animation:shimmer 2s infinite;
+}
+</style>
+</head>
+<body>
+
+<!-- ============ SCREEN: DASHBOARD ============ -->
+<div id="screen-dashboard" class="screen active">
+  <div class="topbar">
+    <div>
+      <div style="font-size:1.3rem;font-weight:800;letter-spacing:-0.02em;">HABIT<span style="color:var(--mint)">SPIN</span></div>
+      <div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-top:2px;">Make habits addictive</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div id="streak-badge" class="streak-badge" style="display:none;">🔥 <span id="streak-count">0</span> streak</div>
+      <button class="btn btn-ghost btn-sm" onclick="showScreen('setup')" style="border-radius:12px;">⚙️ Setup</button>
+    </div>
+  </div>
+
+  <div style="padding:8px 20px 20px;flex:1;display:flex;flex-direction:column;gap:16px;">
+    
+    <!-- JAR + STATS ROW -->
+    <div class="card" style="display:flex;gap:16px;align-items:center;">
+      <!-- Jar visualization -->
+      <div style="position:relative;flex-shrink:0;">
+        <div class="jar-wrap">
+          <svg class="jar-svg" viewBox="0 0 64 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Jar body -->
+            <rect x="10" y="12" width="44" height="58" rx="8" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+            <!-- Fill -->
+            <clipPath id="jarClip"><rect x="11" y="13" width="42" height="56" rx="7"/></clipPath>
+            <rect id="jarFill" x="11" y="69" width="42" height="0" rx="0" fill="url(#jarGrad)" clip-path="url(#jarClip)" class="jar-fill"/>
+            <!-- Gradient -->
+            <defs>
+              <linearGradient id="jarGrad" x1="0" y1="0" x2="0" y2="1" gradientTransform="rotate(180)">
+                <stop offset="0%" stop-color="#f8b722" stop-opacity="0.9"/>
+                <stop offset="100%" stop-color="#f97316" stop-opacity="0.7"/>
+              </linearGradient>
+            </defs>
+            <!-- Milestone lines -->
+            <line x1="11" y1="55" x2="53" y2="55" stroke="rgba(255,255,255,0.15)" stroke-width="1" stroke-dasharray="3,2"/>
+            <line x1="11" y1="37" x2="53" y2="37" stroke="rgba(255,255,255,0.15)" stroke-width="1" stroke-dasharray="3,2"/>
+            <line x1="11" y1="20" x2="53" y2="20" stroke="rgba(255,183,34,0.4)" stroke-width="1" stroke-dasharray="3,2"/>
+            <!-- Lid -->
+            <rect x="6" y="6" width="52" height="10" rx="4" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+            <!-- Shine -->
+            <rect x="14" y="18" width="4" height="40" rx="2" fill="rgba(255,255,255,0.06)"/>
+          </svg>
+        </div>
+      </div>
+      
+      <!-- Jar stats -->
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Prize Jar</div>
+        <div style="font-size:2rem;font-weight:800;color:var(--gold);letter-spacing:-0.02em;line-height:1;margin:4px 0;" id="jar-amount">$0</div>
+        <div style="font-size:0.7rem;color:var(--muted);margin-bottom:8px;">
+          Next: <span id="jar-next-name" style="color:var(--text);font-weight:700;">Mini Treat</span> 
+          at <span id="jar-target" style="color:var(--gold);">$10</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="jar-progress" style="width:0%;background:linear-gradient(90deg,var(--orange),var(--gold));"></div>
+        </div>
+        <!-- Goal milestone labels -->
+        <div id="jar-milestones" style="display:flex;justify-content:space-between;margin-top:4px;"></div>
+      </div>
+    </div>
+
+    <!-- HABITS -->
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);">Your Habits</div>
+        <div style="font-size:0.7rem;color:var(--mint);font-weight:700;" id="habits-done-count">0/3 done</div>
+      </div>
+      <div id="habit-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+
+    <!-- CLIP INVENTORY -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div>
+          <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);">Clip Collection</div>
+          <div style="font-size:0.65rem;color:var(--muted);margin-top:2px;"><span id="clip-count">0</span> clips earned</div>
+        </div>
+        <div id="match-indicator" class="match-indicator" style="background:rgba(255,255,255,0.05);color:var(--muted);">No match</div>
+      </div>
+      <div id="clip-inventory" class="scroll-h" style="min-height:52px;align-items:center;">
+        <div style="color:var(--muted);font-size:0.75rem;">Complete habits to earn clips!</div>
+      </div>
+    </div>
+
+    <!-- SUBMIT / DROP ZONE -->
+    <div>
+      <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:8px;">
+        Drag clips here to unlock tiers
+      </div>
+      <div id="drop-zone" class="drop-zone">
+        <div class="drop-zone-hint" id="drop-hint">Drop clips to cash in →</div>
+      </div>
+      
+      <!-- Tier explanation -->
+      <div id="tier-info" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+        <div class="tier-badge tier-1">2 same → T2</div>
+        <div class="tier-badge tier-2">3 same → T3</div>
+        <div class="tier-badge tier-jackpot">⭐ Gold → T3</div>
+      </div>
+      <!-- Spin preview -->
+      <div id="spin-preview" style="margin-top:10px;display:none;">
+        <div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:6px;">Spins you'll get</div>
+        <div id="spin-preview-pills" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
+      </div>
+    </div>
+
+    <!-- SPIN BUTTON -->
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button id="spin-btn" class="btn btn-primary" style="flex:1;font-size:1.1rem;font-weight:800;" onclick="goToWheel()">
+        🎰 SPIN
+      </button>
+      <button id="clear-btn" class="btn btn-ghost" onclick="clearDropZone()" style="border-radius:16px;padding:16px;">🗑️</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============ SCREEN: WHEEL ============ -->
+<div id="screen-wheel" class="screen" style="align-items:center;overflow:hidden;">
+  <div class="topbar" style="width:100%;">
+    <button class="back-btn" onclick="showScreen('dashboard')" style="width:auto;padding:0 14px;font-size:0.75rem;font-weight:700;">Back</button>
+    <div style="text-align:center;">
+      <div style="font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Spins Left</div>
+      <div id="wheel-spins-left" style="font-size:1.5rem;font-weight:800;line-height:1.1;">0</div>
+    </div>
+    <div id="spins-remaining-pills" style="display:flex;gap:4px;align-items:center;"></div>
+  </div>
+
+  <div style="padding:20px 20px 0;width:100%;text-align:center;">
+    <div style="font-size:1.6rem;font-weight:800;margin-bottom:4px;">Spin the Wheel</div>
+    <div id="wheel-queue-subtitle" style="font-size:0.75rem;color:var(--muted);"></div>
+  </div>
+
+  <!-- WHEEL CONTAINER -->
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;width:100%;">
+    <div style="position:relative;display:inline-block;">
+      <canvas id="wheelCanvas" width="320" height="320"></canvas>
+      <div class="wheel-pointer" id="wheel-pointer"></div>
+      <div class="wheel-center"></div>
+    </div>
+    
+    <button id="main-spin-btn" class="btn btn-primary" style="width:100%;max-width:280px;margin-top:24px;font-size:1.1rem;font-weight:800;" onclick="spinMainWheel()">
+      SPIN!
+    </button>
+  </div>
+</div>
+
+<!-- ============ SCREEN: BONUS ============ -->
+<div id="screen-bonus" class="screen" style="align-items:center;background:radial-gradient(ellipse at center,rgba(162,89,247,0.15),transparent 70%);">
+  <div class="topbar" style="width:100%;">
+    <div style="width:40px;"></div>
+    <div style="text-align:center;">
+      <div style="font-size:1.4rem;font-weight:800;color:var(--purple);animation:bonusPulse 2s ease-in-out infinite;">⚡ BONUS!</div>
+    </div>
+    <div class="streak-badge" id="bonus-streak">🔥 <span id="bonus-streak-num">1</span></div>
+  </div>
+
+  <div style="padding:12px 20px 24px;width:100%;flex:1;display:flex;flex-direction:column;align-items:center;gap:14px;overflow-y:auto;">
+
+    <!-- Status text -->
+    <div id="bonus-status" style="font-size:0.85rem;color:var(--muted);font-weight:600;text-align:center;min-height:20px;"></div>
+
+    <!-- Bonus Wheel -->
+    <div style="position:relative;display:inline-block;flex-shrink:0;">
+      <canvas id="bonusCanvas" width="260" height="260"></canvas>
+      <div class="wheel-pointer" style="transform:translate(-50%,-150px);border-left:9px solid transparent;border-right:9px solid transparent;border-top:17px solid #fff;"></div>
+      <div class="wheel-center" style="width:28px;height:28px;"></div>
+    </div>
+
+    <!-- Timer (only for % challenges) -->
+    <div id="bonus-timer-wrap" style="display:none;text-align:center;">
+      <div style="font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.15em;font-weight:700;margin-bottom:4px;">Time remaining</div>
+      <div id="bonus-timer" class="timer-display">10:00</div>
+    </div>
+
+    <!-- Result card -->
+    <div id="bonus-result-card" class="card2" style="width:100%;text-align:center;display:none;">
+      <div id="bonus-challenge" style="font-size:1.1rem;font-weight:800;color:var(--purple);"></div>
+      <div id="bonus-habit-task" style="font-size:0.78rem;color:var(--muted);margin-top:6px;line-height:1.5;"></div>
+    </div>
+
+    <!-- Dynamic action buttons -->
+    <div id="bonus-actions" style="width:100%;display:flex;flex-direction:column;gap:8px;margin-top:auto;"></div>
+  </div>
+</div>
+
+<!-- ============ SCREEN: SETUP ============ -->
+<div id="screen-setup" class="screen">
+  <div class="topbar">
+    <button class="back-btn" onclick="saveSetup()" style="width:auto;padding:0 14px;font-size:0.75rem;font-weight:700;">Back</button>
+    <div style="font-size:1rem;font-weight:700;">Setup</div>
+    <div style="width:60px;"></div>
+  </div>
+
+  <div style="padding:8px 20px 80px;display:flex;flex-direction:column;gap:24px;overflow-y:auto;">
+    
+    <!-- Stats banner -->
+    <div id="setup-stats-banner" class="card" style="background:linear-gradient(135deg,rgba(0,229,160,0.08),rgba(75,124,247,0.08));border-color:rgba(0,229,160,0.15);display:flex;gap:0;overflow:hidden;padding:0;border-radius:18px;">
+      <div style="flex:1;padding:14px 16px;text-align:center;border-right:1px solid rgba(255,255,255,0.06);">
+        <div id="stat-habits-done" style="font-size:1.8rem;font-weight:800;color:var(--mint);">0</div>
+        <div style="font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;">Habits Done</div>
+      </div>
+      <div style="flex:1;padding:14px 16px;text-align:center;border-right:1px solid rgba(255,255,255,0.06);">
+        <div id="stat-clips-total" style="font-size:1.8rem;font-weight:800;color:var(--gold);">0</div>
+        <div style="font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;">Clips Earned</div>
+      </div>
+      <div style="flex:1;padding:14px 16px;text-align:center;">
+        <div id="stat-jar-total" style="font-size:1.8rem;font-weight:800;color:var(--blue);">$0</div>
+        <div style="font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px;">In Your Jar</div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);margin-bottom:12px;">Your Habits</div>
+      <div id="habit-setup-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+      <button class="btn btn-ghost" style="width:100%;margin-top:10px;border-radius:14px;" onclick="addHabit()">+ Add Habit</button>
+    </div>
+
+    <!-- Rewards -->
+    <div>
+      <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);margin-bottom:4px;">Reward Tiers</div>
+      <div style="font-size:0.7rem;color:var(--muted);margin-bottom:12px;line-height:1.5;">Must be highly addicting, time-wasting, and guilt-inducing enough to want to earn!</div>
+      
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="card2">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <div class="tier-badge tier-1">Tier 1</div>
+            <div style="font-size:0.7rem;color:var(--muted);">40% chance</div>
+          </div>
+          <div class="setup-label">Your T1 reward</div>
+          <input class="setup-input" id="reward-t1" placeholder="e.g. 30 min social media" type="text">
+        </div>
+        <div class="card2">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <div class="tier-badge tier-2">Tier 2</div>
+            <div style="font-size:0.7rem;color:var(--muted);">30% chance (2 matching clips)</div>
+          </div>
+          <div class="setup-label">Your T2 reward</div>
+          <input class="setup-input" id="reward-t2" placeholder="e.g. 1hr gaming session" type="text">
+        </div>
+        <div class="card2">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <div class="tier-badge tier-3">Tier 3</div>
+            <div style="font-size:0.7rem;color:var(--muted);">20% chance (3 matching or Gold)</div>
+          </div>
+          <div class="setup-label">Your T3 reward</div>
+          <input class="setup-input" id="reward-t3" placeholder="e.g. Buy that thing you want" type="text">
+        </div>
+        <div class="card2">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+            <div class="tier-badge tier-jackpot">Jackpot</div>
+            <div style="font-size:0.7rem;color:var(--muted);">2% chance</div>
+          </div>
+          <div class="setup-label">Your Jackpot reward</div>
+          <input class="setup-input" id="reward-jackpot" placeholder="e.g. Weekend trip anywhere!" type="text">
+        </div>
+      </div>
+    </div>
+
+    <!-- Jar Goals -->
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div style="font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);">🪙 Jar Prize Goals</div>
+        <button class="btn btn-ghost btn-sm" onclick="addJarGoal()" style="border-radius:10px;font-size:0.7rem;padding:6px 14px;">+ Add Goal</button>
+      </div>
+      <div style="font-size:0.7rem;color:var(--muted);margin-bottom:12px;line-height:1.5;">Plan your prize ladder. The dashboard shows whichever goal comes next as you fill your jar.</div>
+      <div id="jar-goals-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+
+    <!-- Rules reminder -->
+    <div class="card" style="border-color:rgba(248,183,34,0.15);">
+      <div style="font-size:0.7rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;">⚡ The 3 Rules</div>
+      <div style="font-size:0.75rem;color:var(--muted);line-height:1.7;">
+        <div>① Rewards must be <strong style="color:var(--text);">highly addicting</strong> (dopamine rush)</div>
+        <div>② Rewards must feel <strong style="color:var(--text);">slightly guilty</strong> (time/money wasting)</div>
+        <div>③ You <strong style="color:var(--red);">NEVER</strong> do them except through the app</div>
+      </div>
+    </div>
+
+    <!-- Danger zone -->
+    <div class="card" style="border-color:rgba(240,72,74,0.2);">
+      <div style="font-size:0.7rem;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">⚠️ Danger Zone</div>
+      <div style="font-size:0.72rem;color:var(--muted);margin-bottom:14px;line-height:1.5;">Permanently erases all progress — clips, jar, habit history. Rewards and habits setup are kept.</div>
+      <button id="reset-btn-step1" class="btn btn-ghost" style="width:100%;border-radius:14px;font-size:0.8rem;border:1px solid rgba(240,72,74,0.3);color:var(--red);" onclick="resetStep1()">
+        🗑️ Delete All Progress
+      </button>
+      <div id="reset-confirm-box" style="display:none;margin-top:10px;background:rgba(240,72,74,0.08);border:1px solid rgba(240,72,74,0.3);border-radius:14px;padding:14px;">
+        <div style="font-size:0.8rem;font-weight:700;color:var(--red);margin-bottom:10px;">Are you sure? This cannot be undone.</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-danger" style="flex:1;border-radius:12px;font-size:0.8rem;" onclick="doResetProgress()">Yes, delete everything</button>
+          <button class="btn btn-ghost" style="flex:1;border-radius:12px;font-size:0.8rem;" onclick="cancelReset()">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ RESULT OVERLAY ============ -->
+<div id="result-overlay" class="result-overlay">
+  <div id="result-emoji" class="result-emoji">🎉</div>
+  <div id="result-title" class="result-title">YOU WON!</div>
+  <div id="result-tier-badge" class="tier-badge tier-1" style="font-size:0.85rem;padding:8px 20px;"></div>
+  <div class="result-reward">
+    <div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Your Reward</div>
+    <div id="result-reward-text" style="font-size:1.2rem;font-weight:700;"></div>
+  </div>
+  <button class="btn btn-primary" style="width:100%;max-width:280px;" onclick="claimResult()">Claim & Continue</button>
+</div>
+
+<!-- DRAG GHOST -->
+<div id="drag-ghost" style="display:none;width:36px;height:50px;position:fixed;pointer-events:none;z-index:9999;"></div>
+
+<!-- CLIP EARNED POPUP -->
+<div id="clip-popup" class="clip-earned-popup">
+  <div style="font-size:3rem;" id="popup-clip-icon"></div>
+  <div style="font-size:1.1rem;font-weight:800;color:var(--mint);">Clip Earned!</div>
+  <div style="font-size:0.75rem;color:var(--muted);" id="popup-clip-color"></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast">Toast message</div>
+
+<script>
+// ==========================================
+// GAME STATE
+// ==========================================
+const CLIP_COLORS = ['red','blue','green','orange','purple','pink'];
+const CLIP_GOLD = 'gold';
+
+const CLIP_CSS = {
+  red:'#ef4444', blue:'#4b7cf7', green:'#22c55e',
+  orange:'#f97316', purple:'#a855f7', pink:'#ec4899', gold:'#f8b722'
+};
+
+const CLIP_LABELS = {
+  red:'Red Clip', blue:'Blue Clip', green:'Green Clip',
+  orange:'Orange Clip', purple:'Purple Clip', pink:'Pink Clip', gold:'⭐ Gold Clip'
+};
+
+let state = {
+  habits: [
+    {id:1, name:'Morning Fitness', task:'15 Burpees', icon:'💪', done:false},
+    {id:2, name:'Deep Reading', task:'Read 20 mins', icon:'📚', done:false},
+    {id:3, name:'Side Hustle', task:'Work 30 mins', icon:'💻', done:false}
+  ],
+  clips: [],           // all clips in inventory
+  submittedClips: [],  // clips in drop zone
+  jar: 0,
+  jarGoals: [
+    {id:1, name:'Mini Treat', amount:10},
+    {id:2, name:'Nice Dinner', amount:25},
+    {id:3, name:'Weekend Trip', amount:50}
+  ],
+  jarGoalIdCounter: 4,
+  spinQueue: [],         // array of tier strings e.g. ['T3','T2','T1']
+  currentSpinTier: null, // tier of the spin currently being taken
+  spinning: false,
+  lastResult: null,    // last wheel result
+  streak: 0,
+  bonusActive: false,
+  bonusTimeLeft: 600,
+  bonusTimerInterval: null,
+  bonusResult: null,   // bonus wheel result
+  rewards: {
+    t1: '30 min social media',
+    t2: '1 hour gaming session',
+    t3: 'Buy something you want',
+    jackpot: 'Weekend trip!'
+  }
+};
+
+let dragState = {
+  active: false,
+  clipIndex: null,
+  ghost: null,
+  source: null
+};
+
+// ==========================================
+// AUDIO SYSTEM
+// ==========================================
+let audioCtx = null;
+
+function initAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+  }
+}
+
+function playTone(freq, dur=0.1, vol=0.2, type='sine', delay=0) {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+  gain.gain.setValueAtTime(vol, audioCtx.currentTime + delay);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + dur);
+  osc.start(audioCtx.currentTime + delay);
+  osc.stop(audioCtx.currentTime + delay + dur + 0.01);
+}
+
+function playSound(name) {
+  initAudio();
+  if (!audioCtx) return;
+  switch(name) {
+    case 'clip':
+      playTone(800, 0.08, 0.15, 'sine');
+      playTone(1200, 0.06, 0.1, 'sine', 0.06);
+      break;
+    case 'gold-clip':
+      [600,800,1000,1300,1600].forEach((f,i) => playTone(f, 0.15, 0.15, 'sine', i*0.08));
+      break;
+    case 'spin-start':
+      playTone(200, 0.05, 0.1, 'square');
+      break;
+    case 'spin-tick':
+      playTone(300, 0.04, 0.08, 'square');
+      break;
+    case 'win-t1':
+      playTone(523, 0.2, 0.2, 'sine');
+      playTone(659, 0.2, 0.2, 'sine', 0.15);
+      playTone(784, 0.3, 0.2, 'sine', 0.3);
+      break;
+    case 'win-t2':
+      [523,659,784,1047].forEach((f,i) => playTone(f, 0.2, 0.2, 'sine', i*0.12));
+      break;
+    case 'win-t3':
+      [523,659,784,1047,1319].forEach((f,i) => playTone(f, 0.25, 0.2, 'sine', i*0.1));
+      break;
+    case 'win-jackpot':
+      [261,330,392,523,659,784,1047].forEach((f,i) => playTone(f, 0.3, 0.25, 'triangle', i*0.09));
+      break;
+    case 'near-miss':
+      playTone(440, 0.3, 0.2, 'sawtooth');
+      playTone(300, 0.2, 0.15, 'sawtooth', 0.3);
+      break;
+    case 'bonus':
+      [400,600,800,1000,800,600,400].forEach((f,i) => playTone(f, 0.1, 0.2, 'square', i*0.06));
+      break;
+    case 'timer-tick':
+      playTone(800, 0.05, 0.1, 'square');
+      break;
+    case 'timer-urgent':
+      playTone(900, 0.05, 0.15, 'sawtooth');
+      break;
+    case 'drop':
+      playTone(400, 0.1, 0.15, 'sine');
+      playTone(500, 0.08, 0.12, 'sine', 0.08);
+      break;
+  }
+}
+
+// ==========================================
+// WHEEL SETUP
+// ==========================================
+const WHEEL_SEGMENTS = [
+  {label:'TIER 1', type:'T1', color:'#c0392b', textColor:'#fff'},
+  {label:'TIER 2', type:'T2', color:'#e67e22', textColor:'#fff'},
+  {label:'TIER 1', type:'T1', color:'#e74c3c', textColor:'#fff'},
+  {label:'TIER 3', type:'T3', color:'#2980b9', textColor:'#fff'},
+  {label:'BONUS',  type:'BONUS', color:'#7d3c98', textColor:'#fff'},
+  {label:'TIER 2', type:'T2', color:'#d35400', textColor:'#fff'},
+  {label:'TIER 1', type:'T1', color:'#c0392b', textColor:'#fff'},
+  {label:'JACKPOT',type:'JACKPOT', color:'#b7950b', textColor:'#000'},
+  {label:'TIER 2', type:'T2', color:'#ca6f1e', textColor:'#fff'},
+  {label:'TIER 1', type:'T1', color:'#e74c3c', textColor:'#fff'},
+  {label:'TIER 3', type:'T3', color:'#1a5276', textColor:'#fff'},
+  {label:'TIER 2', type:'T2', color:'#e67e22', textColor:'#fff'},
+];
+
+let wheelRotation = 0;
+let isSpinning = false;
+function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
+
+// Build spin queue from submitted clips
+function calculateSpinQueue() {
+  const clips = [...state.submittedClips];
+  const queue = [];
+
+  // Gold clips → T3 each
+  const golds = clips.filter(c => c === 'gold');
+  golds.forEach(() => queue.push('T3'));
+
+  // Group non-gold by color
+  const nonGold = clips.filter(c => c !== 'gold');
+  const counts = {};
+  nonGold.forEach(c => counts[c] = (counts[c] || 0) + 1);
+
+  // Sort by count descending so best matches go first
+  Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .forEach(([color, count]) => {
+      let rem = count;
+      while (rem >= 3) { queue.push('T3'); rem -= 3; }
+      if (rem === 2) { queue.push('T2'); rem = 0; }
+      if (rem === 1) { queue.push('T1'); }
+    });
+
+  return queue;
+}
+
+// Preview queue for dashboard (doesn't consume clips)
+function previewSpinQueue() {
+  return calculateSpinQueue();
+}
+
+function getWeightedResult(tierCap) {
+  const r = Math.random() * 100;
+  let result;
+  if (r < 40) result = 'T1';
+  else if (r < 70) result = 'T2';
+  else if (r < 90) result = 'T3';
+  else if (r < 98) result = 'BONUS';
+  else result = 'JACKPOT';
+
+  // Clamp to tier cap
+  if (tierCap === 'T1') {
+    if (result === 'T2' || result === 'T3') result = 'T1';
+    if (result === 'JACKPOT') result = 'T1';
+  }
+  if (tierCap === 'T2') {
+    if (result === 'T3') result = 'T2';
+    if (result === 'JACKPOT') result = 'T2';
+  }
+  // T3 cap: all outcomes allowed including JACKPOT and BONUS
+
+  return result;
+}
+
+function renderWheelQueueUI() {
+  const queue = state.spinQueue;
+
+  // Spins left count
+  const countEl = document.getElementById('wheel-spins-left');
+  if (countEl) countEl.textContent = queue.length;
+
+  // Tier pills on right
+  const tierColors = {T1:'var(--red)',T2:'var(--orange)',T3:'var(--blue)',JACKPOT:'var(--gold)'};
+  const pills = document.getElementById('spins-remaining-pills');
+  if (pills) {
+    pills.innerHTML = queue.map((t, i) => {
+      const isCurrent = i === 0;
+      const label = t === 'JACKPOT' ? 'JP' : t;
+      return `<div style="
+        padding:4px 8px;border-radius:6px;font-size:0.6rem;font-weight:800;
+        background:${isCurrent ? tierColors[t] : 'rgba(255,255,255,0.07)'};
+        color:${isCurrent ? '#000' : 'var(--muted)'};
+        opacity:${isCurrent ? 1 : 0.5};
+      ">${label}</div>`;
+    }).join('<div style="color:var(--muted);font-size:0.6rem;">›</div>');
+  }
+
+  const subtitle = document.getElementById('wheel-queue-subtitle');
+  if (subtitle) {
+    subtitle.textContent = queue.length > 1
+      ? `${queue.length} spins queued — complete them all!`
+      : queue.length === 1 ? `1 spin — make it count!` : '';
+  }
+}
+
+function spinMainWheel() {
+  if (isSpinning || state.spinning) return;
+  if (state.spinQueue.length === 0) return;
+
+  initAudio();
+  state.spinning = true;
+  isSpinning = true;
+
+  // Consume the first spin from queue
+  state.currentSpinTier = state.spinQueue.shift();
+  renderWheelQueueUI();
+
+  const mainSpinBtn = document.getElementById('main-spin-btn');
+  mainSpinBtn.disabled = true;
+
+  // Determine result clamped to this spin's tier
+  let result = getWeightedResult(state.currentSpinTier);
+
+  // Near-miss check (only meaningful for lower tiers)
+  const nearMiss = (result === 'T1' || result === 'T2') && Math.random() < 0.4;
+
+  // Find matching segment
+  const matchingSegments = WHEEL_SEGMENTS.map((s, i) => ({...s, i})).filter(s => s.type === result);
+  const targetSeg = matchingSegments[Math.floor(Math.random() * matchingSegments.length)];
+  const segArc = (2 * Math.PI) / WHEEL_SEGMENTS.length;
+  const targetAngle = -(targetSeg.i * segArc + segArc / 2);
+  const fullSpins = (5 + Math.random() * 4) * 2 * Math.PI;
+
+  let finalRotation = fullSpins + targetAngle - (wheelRotation % (2 * Math.PI));
+  if (finalRotation < fullSpins) finalRotation += 2 * Math.PI;
+
+  const startRotation = wheelRotation;
+  const duration = 4000 + Math.random() * 1500;
+  let startTime = null;
+  let tickCount = 0;
+
+  playSound('spin-start');
+
+  function animate(timestamp) {
+    if (!startTime) startTime = timestamp;
+    const progress = Math.min((timestamp - startTime) / duration, 1);
+    const easedProgress = easeOut(progress);
+
+    wheelRotation = startRotation + finalRotation * easedProgress;
+    drawWheel('wheelCanvas', WHEEL_SEGMENTS, wheelRotation, 320);
+
+    const currentTick = Math.floor(wheelRotation / segArc);
+    if (currentTick !== tickCount && progress < 0.85) {
+      tickCount = currentTick;
+      if (1 - easedProgress > 0.1) playSound('spin-tick');
+    }
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      state.spinning = false;
+      isSpinning = false;
+      state.lastResult = result;
+      if (nearMiss) showNearMiss(() => announceLanding(result, () => showResult(result)));
+      else setTimeout(() => announceLanding(result, () => showResult(result)), 300);
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
+function drawWheel(canvasId, segments, rotation, size) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const cx = size / 2, cy = size / 2, r = size / 2 - 4;
+  const arc = (2 * Math.PI) / segments.length;
+
+  ctx.clearRect(0, 0, size, size);
+
+  // Outer ring
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + 3, 0, 2 * Math.PI);
+  ctx.fillStyle = '#1a1b2e';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  for (let i = 0; i < segments.length; i++) {
+    const startAngle = rotation + i * arc - Math.PI / 2;
+    const endAngle = startAngle + arc;
+    const seg = segments[i];
+
+    // Segment fill
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, startAngle, endAngle);
+    ctx.closePath();
+    ctx.fillStyle = seg.color;
+    ctx.fill();
+
+    // Segment border
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Metallic highlight
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r * 0.5, startAngle, endAngle);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    ctx.fill();
+
+    // Text
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(startAngle + arc / 2);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = seg.textColor || '#fff';
+    const fontSize = size > 280 ? 11 : 9;
+    ctx.font = `bold ${fontSize}px Syne, sans-serif`;
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 4;
+    ctx.fillText(seg.label, r - 10, 4);
+    ctx.restore();
+  }
+
+  // Segment dots at edges
+  for (let i = 0; i < segments.length; i++) {
+    const angle = rotation + i * arc - Math.PI / 2;
+    const dotX = cx + Math.cos(angle) * (r - 2);
+    const dotY = cy + Math.sin(angle) * (r - 2);
+    ctx.beginPath();
+    ctx.arc(dotX, dotY, 3, 0, 2 * Math.PI);
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.fill();
+  }
+
+  // Center circle
+  ctx.beginPath();
+  ctx.arc(cx, cy, size > 280 ? 18 : 14, 0, 2 * Math.PI);
+  ctx.fillStyle = '#0a0b12';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+
+// Brief landing announcement so it's crystal-clear what segment was hit
+function announceLanding(result, callback) {
+  const names    = {T1:'TIER 1', T2:'TIER 2', T3:'TIER 3', BONUS:'⚡ BONUS!', JACKPOT:'💥 JACKPOT!'};
+  const colors   = {T1:'#ef4444', T2:'#f97316', T3:'#4b7cf7', BONUS:'#a855f7', JACKPOT:'#f8b722'};
+  const name  = names[result]  || result;
+  const color = colors[result] || '#fff';
+
+  const el = document.createElement('div');
+  el.style.cssText = `
+    position:fixed;top:45%;left:50%;transform:translate(-50%,-50%) scale(0.5);
+    font-size:2.4rem;font-weight:900;color:${color};z-index:400;text-align:center;
+    text-shadow:0 0 40px ${color},0 0 80px ${color}55;pointer-events:none;
+    opacity:0;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1),opacity 0.3s;
+  `;
+  el.textContent = name;
+  document.body.appendChild(el);
+
+  requestAnimationFrame(() => {
+    el.style.transform = 'translate(-50%,-50%) scale(1)';
+    el.style.opacity = '1';
+  });
+
+  setTimeout(() => {
+    el.style.transition = 'opacity 0.25s,transform 0.25s';
+    el.style.opacity = '0';
+    el.style.transform = 'translate(-50%,-50%) scale(0.8)';
+    setTimeout(() => { el.remove(); callback(); }, 250);
+  }, 900);
+}
+
+function showNearMiss(cb) {
+  playSound('near-miss');
+  const el = document.createElement('div');
+  el.className = 'near-miss-text';
+  el.textContent = 'SO CLOSE... 😱';
+  document.body.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.4s'; }, 1200);
+  setTimeout(() => { el.remove(); cb(); }, 1700);
+}
+
+function showResult(result) {
+  // BONUS: skip overlay entirely, jump straight to bonus screen
+  if (result === 'BONUS') {
+    triggerBonus();
+    return;
+  }
+
+  const overlay = document.getElementById('result-overlay');
+  const resultMap = {
+    'T1': {emoji:'🎲', title:'TIER 1 WIN!', reward: state.rewards.t1, badge:'tier-1', badgeText:'Tier 1', sound:'win-t1'},
+    'T2': {emoji:'🎯', title:'TIER 2 WIN!', reward: state.rewards.t2, badge:'tier-2', badgeText:'Tier 2', sound:'win-t2'},
+    'T3': {emoji:'🏆', title:'TIER 3 WIN!', reward: state.rewards.t3, badge:'tier-3', badgeText:'Tier 3', sound:'win-t3'},
+    'JACKPOT': {emoji:'💥', title:'JACKPOT!!!', reward: state.rewards.jackpot, badge:'tier-jackpot', badgeText:'JACKPOT', sound:'win-jackpot'},
+  };
+
+  const info = resultMap[result] || resultMap['T1'];
+  document.getElementById('result-emoji').textContent = info.emoji;
+  document.getElementById('result-title').textContent = info.title;
+  document.getElementById('result-reward-text').textContent = info.reward;
+  document.getElementById('result-tier-badge').className = `tier-badge ${info.badge}`;
+  document.getElementById('result-tier-badge').textContent = info.badgeText;
+
+  overlay.classList.add('active');
+  playSound(info.sound);
+
+  if (result === 'JACKPOT') spawnConfetti();
+  if (result === 'T3') setTimeout(spawnConfetti, 200);
+}
+
+function claimResult() {
+  document.getElementById('result-overlay').classList.remove('active');
+  state.spinning = false;
+  isSpinning = false;
+
+  if (state.spinQueue.length > 0) {
+    // More spins remain — stay on wheel, re-enable button
+    showScreen('wheel');
+  } else {
+    // All spins done — clear submitted clips and go home
+    state.submittedClips = [];
+    calculateTier();
+    renderDropZone();
+    showScreen('dashboard');
+    renderAll();
+  }
+}
+
+function triggerBonus() {
+  state.bonusActive = true;
+  state.streak++;
+  showScreen('bonus');
+  document.getElementById('bonus-streak-num').textContent = state.streak;
+  document.getElementById('bonus-result-card').style.display = 'none';
+  document.getElementById('bonus-timer-wrap').style.display = 'none';
+  document.getElementById('bonus-actions').innerHTML = '';
+  setBonusStatus('Spinning the bonus wheel...');
+  drawBonusWheel(bonusWheelRotation);
+  setTimeout(() => runBonusSpin(false), 700);
+}
+
+// Spin the bonus wheel and call onDone with the landed segment
+function runBonusSpin(avoidExtra) {
+  if (isBonusSpinning) return;
+  isBonusSpinning = true;
+
+  // Pick a random segment (avoid EXTRA for sub-spins)
+  const pool = avoidExtra
+    ? BONUS_SEGMENTS.filter(s => s.type !== 'EXTRA')
+    : BONUS_SEGMENTS;
+  const bonus = pool[Math.floor(Math.random() * pool.length)];
+  const targetIdx = BONUS_SEGMENTS.indexOf(bonus);
+
+  const segArc = (2 * Math.PI) / BONUS_SEGMENTS.length;
+  const targetAngle = -(targetIdx * segArc + segArc / 2);
+  const fullSpins = (3 + Math.random() * 2) * 2 * Math.PI;
+  let finalRotation = fullSpins + targetAngle - (bonusWheelRotation % (2 * Math.PI));
+  if (finalRotation < fullSpins) finalRotation += 2 * Math.PI;
+
+  const startRotation = bonusWheelRotation;
+  const duration = 2500 + Math.random() * 800;
+  let startTime = null;
+  playSound('spin-start');
+
+  function animate(ts) {
+    if (!startTime) startTime = ts;
+    const p = Math.min((ts - startTime) / duration, 1);
+    bonusWheelRotation = startRotation + finalRotation * easeOut(p);
+    drawBonusWheel(bonusWheelRotation);
+    if (p < 1) { requestAnimationFrame(animate); }
+    else { isBonusSpinning = false; handleBonusResult(bonus.type, avoidExtra); }
+  }
+  requestAnimationFrame(animate);
+}
+
+function setBonusStatus(txt) {
+  document.getElementById('bonus-status').textContent = txt;
+}
+
+function setBonusActions(html) {
+  document.getElementById('bonus-actions').innerHTML = html;
+}
+
+function showBonusResultCard(title, sub) {
+  const card = document.getElementById('bonus-result-card');
+  document.getElementById('bonus-challenge').textContent = title;
+  document.getElementById('bonus-habit-task').textContent = sub;
+  card.style.display = 'block';
+  card.style.animation = 'slideUp 0.35s ease both';
+}
+
+function earnBonusClipNow() {
+  const color = Math.random() < 0.05 ? CLIP_GOLD : CLIP_COLORS[Math.floor(Math.random() * CLIP_COLORS.length)];
+  state.clips.push(color);
+  saveState();
+  showClipPopup(color);
+  playSound(color === CLIP_GOLD ? 'gold-clip' : 'clip');
+  return color;
+}
+
+function returnFromBonus() {
+  clearBonusTimer();
+  document.getElementById('bonus-timer').classList.remove('urgent');
+  state.bonusActive = false;
+  state.spinning = false;
+  isSpinning = false;
+
+  if (state.spinQueue.length > 0) {
+    showScreen('wheel');
+  } else {
+    state.submittedClips = [];
+    calculateTier();
+    renderDropZone();
+    showScreen('dashboard');
+    renderAll();
+  }
+}
+
+function handleBonusResult(type, wasSubSpin) {
+  if (type === 'FREE') {
+    const clip = earnBonusClipNow();
+    showBonusResultCard('🎁 Free Clip!', `A ${CLIP_LABELS[clip]} goes straight to your collection.`);
+    setBonusStatus('Lucky!');
+    spawnConfetti();
+    playSound('win-t2');
+    setBonusActions(`<button class="btn btn-primary" style="width:100%;" onclick="returnFromBonus()">Continue →</button>`);
+
+  } else if (type === 'EXTRA' && !wasSubSpin) {
+    // Two bonus sub-spins
+    showBonusResultCard('⚡ EXTRA! 2 Bonus Spins', 'Spinning twice for you...');
+    setBonusStatus('Spin 1 of 2...');
+    playSound('win-t3');
+    spawnConfetti();
+
+    // Sub-spin 1
+    setTimeout(() => {
+      document.getElementById('bonus-result-card').style.display = 'none';
+      setBonusStatus('Spin 1 of 2...');
+      runBonusSpin(true); // avoidExtra = true
+    }, 1400);
+
+    // After sub-spin 1 resolves (handleBonusResult called with wasSubSpin=true),
+    // we do sub-spin 2 via state flag
+    state._extraSpinsLeft = 2;
+
+  } else if (type === 'EXTRA' && wasSubSpin) {
+    // Treat as FREE in sub-spin context
+    handleBonusResult('FREE', true);
+
+  } else {
+    // Percentage challenge: 25, 50, or 75
+    const pct = parseInt(type);
+    const habit = state.habits.find(h => !h.done) || state.habits[0];
+    const task = habit ? habit.task : 'your habit';
+    showBonusResultCard(
+      `Do ${pct}% of: ${task}`,
+      'Finish within 10 minutes → earn a free clip. Timer runs out → no reward.'
+    );
+    setBonusStatus('Timer running — go!');
+    playSound('win-t1');
+    document.getElementById('bonus-timer-wrap').style.display = 'block';
+    startBonusTimer();
+    setBonusActions(`
+      <button class="btn btn-primary" style="width:100%;" onclick="bonusFinished()">✅ I Finished!</button>
+      <button class="btn btn-ghost" style="width:100%;margin-top:4px;" onclick="giveUpBonus()">Give Up</button>
+    `);
+  }
+
+  // Handle EXTRA 2nd sub-spin sequencing
+  if (wasSubSpin && state._extraSpinsLeft > 0) {
+    state._extraSpinsLeft--;
+    if (state._extraSpinsLeft > 0) {
+      // Fire 2nd sub-spin after this one resolves
+      const actions = document.getElementById('bonus-actions');
+      // Override the continue button to chain next spin
+      if (type === 'FREE') {
+        setBonusActions(`<button class="btn btn-primary" style="width:100%;" onclick="startSecondExtraSpin()">Spin 2 of 2 →</button>`);
+      }
+    } else {
+      // This was the last sub-spin — add normal continue
+      if (type === 'FREE') {
+        setBonusActions(`<button class="btn btn-primary" style="width:100%;" onclick="returnFromBonus()">Continue →</button>`);
+      }
+    }
+  }
+}
+
+function startSecondExtraSpin() {
+  document.getElementById('bonus-result-card').style.display = 'none';
+  setBonusStatus('Spin 2 of 2...');
+  setBonusActions('');
+  state._extraSpinsLeft = 0;
+  runBonusSpin(true);
+}
+
+function bonusFinished() {
+  clearBonusTimer();
+  document.getElementById('bonus-timer').classList.remove('urgent');
+  document.getElementById('bonus-timer-wrap').style.display = 'none';
+  const clip = earnBonusClipNow();
+  showBonusResultCard('🎉 Clip Earned!', `A ${CLIP_LABELS[clip]} added to your collection.`);
+  setBonusStatus('Well done!');
+  setBonusActions(`<button class="btn btn-primary" style="width:100%;" onclick="returnFromBonus()">Continue →</button>`);
+}
+
+function giveUpBonus() {
+  clearBonusTimer();
+  document.getElementById('bonus-timer').classList.remove('urgent');
+  document.getElementById('bonus-timer-wrap').style.display = 'none';
+  setBonusStatus('No clip this time.');
+  setBonusActions(`<button class="btn btn-ghost" style="width:100%;" onclick="returnFromBonus()">Back to Wheel</button>`);
+}
+
+// BONUS WHEEL
+const BONUS_SEGMENTS = [
+  {label:'75%', type:'75', color:'#c0392b', textColor:'#fff'},
+  {label:'FREE!', type:'FREE', color:'#27ae60', textColor:'#fff'},
+  {label:'50%', type:'50', color:'#e67e22', textColor:'#fff'},
+  {label:'EXTRA', type:'EXTRA', color:'#8e44ad', textColor:'#fff'},
+  {label:'25%', type:'25', color:'#2980b9', textColor:'#fff'},
+  {label:'FREE!', type:'FREE', color:'#27ae60', textColor:'#fff'},
+  {label:'75%', type:'75', color:'#c0392b', textColor:'#fff'},
+  {label:'50%', type:'50', color:'#e67e22', textColor:'#fff'},
+];
+
+let bonusWheelRotation = 0;
+let isBonusSpinning = false;
+
+function drawBonusWheel(rotation) {
+  drawWheel('bonusCanvas', BONUS_SEGMENTS, rotation, 260);
+}
+
+function startBonusTimer() {
+  clearBonusTimer();
+  state.bonusTimeLeft = 600;
+  updateTimerDisplay();
+  state.bonusTimerInterval = setInterval(() => {
+    state.bonusTimeLeft--;
+    updateTimerDisplay();
+    const timerEl = document.getElementById('bonus-timer');
+    if (state.bonusTimeLeft <= 60) {
+      timerEl.classList.add('urgent');
+      playSound('timer-urgent');
+    } else {
+      playSound('timer-tick');
+    }
+    if (state.bonusTimeLeft <= 0) {
+      clearBonusTimer();
+      // Timer expired — no reward
+      timerEl.classList.remove('urgent');
+      document.getElementById('bonus-timer-wrap').style.display = 'none';
+      setBonusStatus('Time\'s up! No clip this time.');
+      setBonusActions(`<button class="btn btn-ghost" style="width:100%;" onclick="returnFromBonus()">Back to Wheel</button>`);
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(state.bonusTimeLeft / 60);
+  const s = state.bonusTimeLeft % 60;
+  document.getElementById('bonus-timer').textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
+function clearBonusTimer() {
+  if (state.bonusTimerInterval) { clearInterval(state.bonusTimerInterval); state.bonusTimerInterval = null; }
+}
+
+// ==========================================
+// HABIT SYSTEM
+// ==========================================
+function completeHabit(id) {
+  initAudio();
+  const habit = state.habits.find(h => h.id === id);
+  if (!habit || habit.done) return;
+  
+  habit.done = true;
+  state.habitsCompletedTotal = (state.habitsCompletedTotal || 0) + 1;
+
+  // Draw random clip
+  const roll = Math.random();
+  const newClip = roll < 0.05 ? CLIP_GOLD : CLIP_COLORS[Math.floor(Math.random() * CLIP_COLORS.length)];
+  state.clips.push(newClip);
+  state.jar += 1;
+
+  showClipPopup(newClip);
+  playSound(newClip === CLIP_GOLD ? 'gold-clip' : 'clip');
+  saveState();
+  renderAll();
+}
+
+function showClipPopup(color) {
+  const popup = document.getElementById('clip-popup');
+  const icon = document.getElementById('popup-clip-icon');
+  const label = document.getElementById('popup-clip-color');
+  
+  icon.innerHTML = createClipSVG(color);
+  label.textContent = CLIP_LABELS[color];
+  
+  popup.classList.remove('hide');
+  popup.classList.add('show');
+  
+  setTimeout(() => {
+    popup.classList.add('hide');
+    setTimeout(() => popup.classList.remove('show', 'hide'), 500);
+  }, 1800);
+}
+
+// ==========================================
+// CLIP RENDERING
+// ==========================================
+function createClipSVG(color) {
+  const c = CLIP_CSS[color] || '#999';
+  return `<svg viewBox="0 0 28 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M14 3C9 3 5 7 5 12L5 30C5 36.627 9.373 41 16 41C22.627 41 27 36.627 27 30L27 12C27 8.5 24.5 6 21 6C17.5 6 15 8.5 15 12L15 30C15 32 16.5 33.5 18 33.5C19.5 33.5 21 32 21 30L21 14" stroke="${c}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+function renderInventory() {
+  const inv = document.getElementById('clip-inventory');
+  document.getElementById('clip-count').textContent = state.clips.length;
+
+  if (state.clips.length === 0) {
+    inv.innerHTML = '<div style="color:var(--muted);font-size:0.75rem;padding:8px;">Complete habits to earn clips!</div>';
+    return;
+  }
+
+  // Sort: gold first, then by most-frequent color descending
+  const counts = {};
+  state.clips.forEach(c => counts[c] = (counts[c] || 0) + 1);
+  const sorted = [...state.clips].sort((a, b) => {
+    if (a === 'gold' && b !== 'gold') return -1;
+    if (b === 'gold' && a !== 'gold') return 1;
+    return counts[b] - counts[a];
+  });
+  // Rebuild state.clips in sorted order so indices stay consistent
+  state.clips = sorted;
+
+  inv.innerHTML = '';
+  state.clips.forEach((color, i) => {
+    const clip = document.createElement('div');
+    clip.className = `clip clip-${color}`;
+    clip.innerHTML = createClipSVG(color);
+    clip.dataset.index = i;
+    clip.dataset.color = color;
+    setupDrag(clip, i, 'inventory');
+    inv.appendChild(clip);
+  });
+}
+
+function renderDropZone() {
+  const dz = document.getElementById('drop-zone');
+
+  dz.innerHTML = '';
+
+  if (state.submittedClips.length === 0) {
+    dz.innerHTML = '<div class="drop-zone-hint" id="drop-hint">Drop clips to cash in →</div>';
+    updateSpinPreview();
+    return;
+  }
+
+  state.submittedClips.forEach((color, i) => {
+    const clip = document.createElement('div');
+    clip.className = `clip clip-${color}`;
+    clip.innerHTML = createClipSVG(color);
+    clip.dataset.index = i;
+    clip.dataset.color = color;
+    clip.style.animation = 'pop 0.3s cubic-bezier(0.34,1.56,0.64,1)';
+    clip.onclick = () => returnClipToInventory(i);
+    dz.appendChild(clip);
+  });
+
+  updateMatchIndicator();
+  updateSpinPreview();
+}
+
+function updateSpinPreview() {
+  const preview = document.getElementById('spin-preview');
+  const pills = document.getElementById('spin-preview-pills');
+  if (!preview || !pills) return;
+
+  const queue = calculateSpinQueue();
+  if (queue.length === 0) {
+    preview.style.display = 'none';
+    return;
+  }
+
+  preview.style.display = 'block';
+  const tierColors = {T1:'var(--red)',T2:'var(--orange)',T3:'var(--blue)',JACKPOT:'var(--gold)'};
+  const tierLabels = {T1:'T1',T2:'T2',T3:'T3',JACKPOT:'JP'};
+
+  pills.innerHTML = queue.map(t => `
+    <div style="padding:5px 12px;border-radius:8px;font-size:0.72rem;font-weight:800;
+      background:${tierColors[t]}22;color:${tierColors[t]};border:1px solid ${tierColors[t]}44;">
+      ${tierLabels[t]}
+    </div>
+  `).join('') + `<div style="font-size:0.72rem;color:var(--muted);margin-left:4px;">${queue.length} spin${queue.length > 1 ? 's' : ''}</div>`;
+}
+
+function updateMatchIndicator() {
+  const ind = document.getElementById('match-indicator');
+  const colors = state.submittedClips;
+
+  if (colors.length === 0) {
+    ind.style.background = 'rgba(255,255,255,0.05)';
+    ind.style.color = 'var(--muted)';
+    ind.textContent = 'No match';
+    return;
+  }
+
+  const hasGold = colors.includes('gold');
+  if (hasGold) {
+    ind.style.background = 'rgba(248,183,34,0.15)';
+    ind.style.color = 'var(--gold)';
+    ind.textContent = '⭐ T3!';
+    return;
+  }
+
+  const counts = {};
+  colors.forEach(c => counts[c] = (counts[c] || 0) + 1);
+  const max = Math.max(...Object.values(counts));
+
+  if (max >= 3) {
+    ind.style.background = 'rgba(75,124,247,0.15)';
+    ind.style.color = 'var(--blue)';
+    ind.textContent = '🎯 T3!';
+  } else if (max >= 2) {
+    ind.style.background = 'rgba(249,115,22,0.15)';
+    ind.style.color = 'var(--orange)';
+    ind.textContent = '✓ T2!';
+  } else {
+    ind.style.background = 'rgba(255,255,255,0.05)';
+    ind.style.color = 'var(--muted)';
+    ind.textContent = 'Need match';
+  }
+}
+
+function calculateTier() {
+  // No longer stores state.tier — queue-based system handles tiers per spin
+  updateSpinPreview();
+}
+
+function clearDropZone() {
+  state.clips.push(...state.submittedClips);
+  state.submittedClips = [];
+  calculateTier();
+  renderInventory();
+  renderDropZone();
+}
+
+function returnClipToInventory(i) {
+  const clip = state.submittedClips.splice(i, 1)[0];
+  state.clips.push(clip);
+  calculateTier();
+  renderInventory();
+  renderDropZone();
+  playSound('drop');
+}
+
+// ==========================================
+// DRAG & DROP SYSTEM
+// ==========================================
+function setupDrag(el, index, source) {
+  el.addEventListener('pointerdown', startDrag, {passive: false});
+  
+  function startDrag(e) {
+    if (dragState.active) return;
+    e.preventDefault();
+    
+    initAudio();
+    dragState.active = true;
+    dragState.clipIndex = index;
+    dragState.source = source;
+    dragState.color = el.dataset.color;
+    
+    const ghost = document.getElementById('drag-ghost');
+    ghost.innerHTML = createClipSVG(el.dataset.color);
+    ghost.style.display = 'block';
+    
+    const rect = el.getBoundingClientRect();
+    ghost.style.left = (rect.left + rect.width / 2 - 18) + 'px';
+    ghost.style.top = (rect.top + rect.height / 2 - 25) + 'px';
+    
+    document.addEventListener('pointermove', moveDrag, {passive: false});
+    document.addEventListener('pointerup', endDrag, {passive: false});
+    document.addEventListener('pointercancel', cancelDrag);
+    
+    el.style.opacity = '0.3';
+    dragState.originEl = el;
+  }
+}
+
+function moveDrag(e) {
+  if (!dragState.active) return;
+  e.preventDefault();
+  
+  const ghost = document.getElementById('drag-ghost');
+  const x = (e.clientX || (e.touches && e.touches[0].clientX)) - 18;
+  const y = (e.clientY || (e.touches && e.touches[0].clientY)) - 25;
+  ghost.style.left = x + 'px';
+  ghost.style.top = y + 'px';
+  
+  // Check if over drop zone
+  const dz = document.getElementById('drop-zone');
+  const dzRect = dz.getBoundingClientRect();
+  const cx = e.clientX || (e.touches && e.touches[0].clientX);
+  const cy = e.clientY || (e.touches && e.touches[0].clientY);
+  
+  if (cx >= dzRect.left && cx <= dzRect.right && cy >= dzRect.top && cy <= dzRect.bottom) {
+    dz.classList.add('over');
+  } else {
+    dz.classList.remove('over');
+  }
+}
+
+function endDrag(e) {
+  if (!dragState.active) return;
+  
+  document.removeEventListener('pointermove', moveDrag);
+  document.removeEventListener('pointerup', endDrag);
+  document.removeEventListener('pointercancel', cancelDrag);
+  
+  const ghost = document.getElementById('drag-ghost');
+  ghost.style.display = 'none';
+  
+  const dz = document.getElementById('drop-zone');
+  dz.classList.remove('over');
+  
+  const cx = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);
+  const cy = e.clientY || (e.changedTouches && e.changedTouches[0].clientY);
+  const dzRect = dz.getBoundingClientRect();
+  
+  const overDropZone = cx >= dzRect.left && cx <= dzRect.right && cy >= dzRect.top && cy <= dzRect.bottom;
+  
+  if (overDropZone && dragState.source === 'inventory') {
+    // Move from inventory to drop zone
+    if (dragState.clipIndex !== null) {
+      const color = state.clips.splice(dragState.clipIndex, 1)[0];
+      if (color) {
+        state.submittedClips.push(color);
+        calculateTier();
+        playSound('drop');
+      }
+    }
+  } else {
+    // Return to original position
+    if (dragState.originEl) dragState.originEl.style.opacity = '1';
+  }
+  
+  dragState.active = false;
+  dragState.clipIndex = null;
+  dragState.originEl = null;
+  
+  renderInventory();
+  renderDropZone();
+}
+
+function cancelDrag() {
+  if (dragState.originEl) dragState.originEl.style.opacity = '1';
+  document.getElementById('drag-ghost').style.display = 'none';
+  document.getElementById('drop-zone').classList.remove('over');
+  dragState.active = false;
+  document.removeEventListener('pointermove', moveDrag);
+  document.removeEventListener('pointerup', endDrag);
+  document.removeEventListener('pointercancel', cancelDrag);
+}
+
+// Prevent page scroll during drag
+document.addEventListener('touchmove', (e) => {
+  if (dragState.active) e.preventDefault();
+}, {passive: false});
+
+// ==========================================
+// JAR SYSTEM
+// ==========================================
+function getNextJarGoal() {
+  const sorted = [...state.jarGoals].sort((a, b) => a.amount - b.amount);
+  return sorted.find(g => g.amount > state.jar) || sorted[sorted.length - 1] || {name:'Goal', amount:50};
+}
+
+function getPrevJarGoal() {
+  const sorted = [...state.jarGoals].sort((a, b) => a.amount - b.amount);
+  const prev = [...sorted].reverse().find(g => g.amount <= state.jar);
+  return prev || {name:'Start', amount:0};
+}
+
+function updateJar() {
+  const sorted = [...state.jarGoals].sort((a, b) => a.amount - b.amount);
+  const nextGoal = getNextJarGoal();
+  const prevGoal = getPrevJarGoal();
+
+  document.getElementById('jar-amount').textContent = `$${state.jar}`;
+  document.getElementById('jar-next-name').textContent = nextGoal.name;
+  document.getElementById('jar-target').textContent = `$${nextGoal.amount}`;
+
+  // Progress from last milestone to next
+  const rangeStart = prevGoal.amount;
+  const rangeEnd = nextGoal.amount;
+  const pct = rangeEnd === rangeStart ? 100 : Math.min(((state.jar - rangeStart) / (rangeEnd - rangeStart)) * 100, 100);
+  document.getElementById('jar-progress').style.width = pct + '%';
+
+  // Animate SVG jar fill (based on overall highest goal)
+  const maxGoal = sorted[sorted.length - 1]?.amount || 50;
+  const maxHeight = 56;
+  const fillHeight = Math.round(Math.min(state.jar / maxGoal, 1) * maxHeight);
+  const fillY = 69 - fillHeight;
+  const fillEl = document.getElementById('jarFill');
+  if (fillEl) {
+    fillEl.setAttribute('height', fillHeight);
+    fillEl.setAttribute('y', fillY);
+  }
+
+  // Milestone labels (show up to 3 closest goals)
+  const milestonesEl = document.getElementById('jar-milestones');
+  if (milestonesEl) {
+    const visible = sorted.slice(0, 3);
+    const icons = ['🎯','🏆','🌙'];
+    milestonesEl.innerHTML = visible.map((g, i) => {
+      const reached = state.jar >= g.amount;
+      return `<span style="font-size:0.55rem;color:${reached ? 'var(--mint)' : 'var(--muted)'};">${icons[i]||'✦'} $${g.amount}</span>`;
+    }).join('');
+  }
+
+  // Goal reached toasts
+  sorted.forEach(g => {
+    if (state.jar === g.amount) {
+      showToast(`🎉 Goal reached: ${g.name}! ($${g.amount})`);
+      spawnConfetti();
+    }
+  });
+}
+
+// ==========================================
+// HABIT RENDERING
+// ==========================================
+function renderHabits() {
+  const list = document.getElementById('habit-list');
+  const done = state.habits.filter(h => h.done).length;
+  document.getElementById('habits-done-count').textContent = `${done}/${state.habits.length} done`;
+  
+  list.innerHTML = '';
+  state.habits.forEach(h => {
+    const card = document.createElement('div');
+    card.className = `habit-card ${h.done ? 'done' : ''}`;
+    card.onclick = () => { if (!h.done) completeHabit(h.id); };
+    card.innerHTML = `
+      <div class="habit-icon" style="background:rgba(255,255,255,0.06);">${h.icon}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:0.9rem;">${h.name}</div>
+        <div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">${h.task}</div>
+      </div>
+      <div class="habit-check">${h.done ? '✓' : ''}</div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+// ==========================================
+// SETUP SCREEN
+// ==========================================
+function renderSetup() {
+  document.getElementById('reward-t1').value = state.rewards.t1;
+  document.getElementById('reward-t2').value = state.rewards.t2;
+  document.getElementById('reward-t3').value = state.rewards.t3;
+  document.getElementById('reward-jackpot').value = state.rewards.jackpot;
+
+  // Stats banner
+  const totalDone = state.habitsCompletedTotal || 0;
+  const totalClips = (state.clips.length || 0) + (state.submittedClips.length || 0);
+  const el1 = document.getElementById('stat-habits-done');
+  const el2 = document.getElementById('stat-clips-total');
+  const el3 = document.getElementById('stat-jar-total');
+  if (el1) el1.textContent = totalDone;
+  if (el2) el2.textContent = totalClips;
+  if (el3) el3.textContent = `$${state.jar}`;
+
+  renderHabitSetup();
+  renderJarGoals();
+}
+
+function renderJarGoals() {
+  const list = document.getElementById('jar-goals-list');
+  if (!list) return;
+  const sorted = [...state.jarGoals].sort((a, b) => a.amount - b.amount);
+  list.innerHTML = '';
+
+  if (sorted.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:0.8rem;padding:16px;">No goals yet. Add one!</div>';
+    return;
+  }
+
+  sorted.forEach((g, i) => {
+    const reached = state.jar >= g.amount;
+    const isNext = !reached && (i === 0 || state.jar >= sorted[i-1].amount);
+    const div = document.createElement('div');
+    div.className = 'card2';
+    div.style.cssText = `display:flex;align-items:center;gap:10px;${isNext ? 'border-color:rgba(248,183,34,0.3);' : ''}`;
+    div.innerHTML = `
+      <div style="font-size:1.1rem;min-width:24px;text-align:center;">${reached ? '✅' : isNext ? '🎯' : '🔒'}</div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+        <input class="setup-input" style="padding:9px 12px;" placeholder="Goal name (e.g. Nice Dinner)" 
+          value="${g.name}" 
+          oninput="updateJarGoalName(${g.id}, this.value)"
+          ${reached ? 'disabled style="padding:9px 12px;opacity:0.5;"' : 'style="padding:9px 12px;"'}>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:0.8rem;color:var(--gold);font-weight:700;">$</span>
+          <input class="setup-input" style="padding:9px 12px;" type="number" min="1" placeholder="Amount"
+            value="${g.amount}"
+            oninput="updateJarGoalAmount(${g.id}, this.value)"
+            ${reached ? 'disabled style="padding:9px 12px;opacity:0.5;"' : 'style="padding:9px 12px;"'}>
+          ${isNext ? '<span style="font-size:0.65rem;font-weight:700;color:var(--gold);white-space:nowrap;background:rgba(248,183,34,0.1);padding:4px 8px;border-radius:6px;">NEXT</span>' : ''}
+          ${reached ? '<span style="font-size:0.65rem;font-weight:700;color:var(--mint);white-space:nowrap;background:rgba(0,229,160,0.1);padding:4px 8px;border-radius:6px;">REACHED</span>' : ''}
+        </div>
+      </div>
+      <button onclick="removeJarGoal(${g.id})" style="background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer;padding:4px;flex-shrink:0;" ${reached ? 'disabled' : ''}>✕</button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function updateJarGoalName(id, val) {
+  const g = state.jarGoals.find(g => g.id === id);
+  if (g) g.name = val;
+}
+
+function updateJarGoalAmount(id, val) {
+  const g = state.jarGoals.find(g => g.id === id);
+  if (g) g.amount = parseInt(val) || g.amount;
+}
+
+function addJarGoal() {
+  const sorted = [...state.jarGoals].sort((a, b) => a.amount - b.amount);
+  const lastAmount = sorted.length > 0 ? sorted[sorted.length - 1].amount : 0;
+  state.jarGoals.push({id: state.jarGoalIdCounter++, name: 'New Goal', amount: lastAmount + 25});
+  renderJarGoals();
+  playSound('drop');
+}
+
+function removeJarGoal(id) {
+  if (state.jarGoals.length <= 1) { showToast('Need at least 1 jar goal!'); return; }
+  state.jarGoals = state.jarGoals.filter(g => g.id !== id);
+  renderJarGoals();
+}
+
+function renderHabitSetup() {
+  const list = document.getElementById('habit-setup-list');
+  list.innerHTML = '';
+  state.habits.forEach((h, i) => {
+    const div = document.createElement('div');
+    div.className = 'card2';
+    div.style.display = 'flex';
+    div.style.gap = '10px';
+    div.style.alignItems = 'center';
+    
+    const ICONS = ['💪','📚','💻','🏃','🎨','🎵','🧘','✍️','🔬','💡'];
+    
+    div.innerHTML = `
+      <div style="font-size:1.4rem;cursor:pointer;" onclick="cycleIcon(${i})">${h.icon}</div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+        <input class="setup-input" style="padding:10px 12px;" placeholder="Habit name" value="${h.name}" onchange="state.habits[${i}].name=this.value">
+        <input class="setup-input" style="padding:10px 12px;" placeholder="Task (e.g. 15 Burpees)" value="${h.task}" onchange="state.habits[${i}].task=this.value">
+      </div>
+      <button onclick="removeHabit(${i})" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;padding:4px;">✕</button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function cycleIcon(i) {
+  const icons = ['💪','📚','💻','🏃','🎨','🎵','🧘','✍️','🔬','💡','🍎','☕','🌱','⚡','🎯'];
+  const cur = icons.indexOf(state.habits[i].icon);
+  state.habits[i].icon = icons[(cur + 1) % icons.length];
+  renderHabitSetup();
+}
+
+function addHabit() {
+  state.habits.push({id: Date.now(), name:'New Habit', task:'Define your task', icon:'⚡', done:false});
+  renderHabitSetup();
+}
+
+function removeHabit(i) {
+  if (state.habits.length <= 1) { showToast('Need at least 1 habit!'); return; }
+  state.habits.splice(i, 1);
+  renderHabitSetup();
+}
+
+function saveSetup() {
+  state.rewards.t1 = document.getElementById('reward-t1').value || state.rewards.t1;
+  state.rewards.t2 = document.getElementById('reward-t2').value || state.rewards.t2;
+  state.rewards.t3 = document.getElementById('reward-t3').value || state.rewards.t3;
+  state.rewards.jackpot = document.getElementById('reward-jackpot').value || state.rewards.jackpot;
+  // jarGoals are saved inline via oninput handlers
+  saveState();
+  showScreen('dashboard');
+  renderAll();
+}
+
+// ==========================================
+// CONFETTI
+// ==========================================
+function spawnConfetti() {
+  const colors = ['#f8b722','#ef4444','#3b82f6','#22c55e','#a855f7','#ec4899','#00e5a0'];
+  for (let i = 0; i < 60; i++) {
+    setTimeout(() => {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.cssText = `
+        left:${10 + Math.random() * 80}%;
+        top:-10px;
+        background:${colors[Math.floor(Math.random() * colors.length)]};
+        animation-duration:${2 + Math.random() * 2}s;
+        animation-delay:${Math.random() * 0.5}s;
+        transform:rotate(${Math.random() * 360}deg);
+        width:${6 + Math.random() * 8}px;
+        height:${6 + Math.random() * 8}px;
+        border-radius:${Math.random() > 0.5 ? '50%' : '2px'};
+      `;
+      document.body.appendChild(piece);
+      setTimeout(() => piece.remove(), 4000);
+    }, i * 30);
+  }
+}
+
+// ==========================================
+// UTILITY
+// ==========================================
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  
+  if (name === 'wheel') {
+    calculateTier();
+    drawWheel('wheelCanvas', WHEEL_SEGMENTS, wheelRotation, 320);
+    renderWheelQueueUI();
+    const spinBtn = document.getElementById('main-spin-btn');
+    spinBtn.disabled = state.spinQueue.length === 0 || isSpinning;
+    spinBtn.textContent = state.spinQueue.length === 0 ? 'No Spins Left' : 'SPIN!';
+  }
+  if (name === 'bonus') {
+    drawBonusWheel(bonusWheelRotation);
+  }
+  if (name === 'setup') {
+    renderSetup();
+  }
+  
+  window.scrollTo(0, 0);
+}
+
+function goToWheel() {
+  initAudio();
+  const queue = calculateSpinQueue();
+  if (queue.length === 0) {
+    showToast('Submit some clips first to earn spins!');
+    return;
+  }
+  state.spinQueue = queue;
+  state.currentSpinTier = null;
+  showScreen('wheel');
+}
+
+function showToast(msg, dur=2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timeout);
+  t._timeout = setTimeout(() => t.classList.remove('show'), dur);
+}
+
+function renderAll() {
+  renderHabits();
+  renderInventory();
+  renderDropZone();
+  updateJar();
+  
+  const streak = document.getElementById('streak-badge');
+  if (state.streak > 0) {
+    streak.style.display = 'inline-flex';
+    document.getElementById('streak-count').textContent = state.streak;
+  } else {
+    streak.style.display = 'none';
+  }
+  
+  // Reset habits at midnight (simplified: reset button in setup)
+  const allDone = state.habits.every(h => h.done);
+  if (allDone) {
+    showToast('🔥 All habits done! Go spin the wheel!');
+  }
+}
+
+// ==========================================
+// INIT
+// ==========================================
+// ==========================================
+// LOCALSTORAGE PERSISTENCE
+// ==========================================
+const SAVE_KEY = 'habitspin_v1';
+
+function saveState() {
+  try {
+    const toSave = {
+      habits: state.habits,
+      clips: state.clips,
+      jar: state.jar,
+      jarGoals: state.jarGoals,
+      jarGoalIdCounter: state.jarGoalIdCounter,
+      streak: state.streak,
+      rewards: state.rewards,
+      habitsCompletedTotal: state.habitsCompletedTotal || 0
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(toSave));
+  } catch(e) { console.warn('Save failed:', e); }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const saved = JSON.parse(raw);
+    state.habits = saved.habits || state.habits;
+    state.clips = saved.clips || [];
+    state.jar = saved.jar || 0;
+    state.jarGoals = saved.jarGoals || state.jarGoals;
+    state.jarGoalIdCounter = saved.jarGoalIdCounter || 4;
+    state.streak = saved.streak || 0;
+    state.rewards = { ...state.rewards, ...saved.rewards };
+    state.habitsCompletedTotal = saved.habitsCompletedTotal || 0;
+    return true;
+  } catch(e) { console.warn('Load failed:', e); return false; }
+}
+
+function resetStep1() {
+  document.getElementById('reset-confirm-box').style.display = 'block';
+  document.getElementById('reset-btn-step1').style.display = 'none';
+}
+
+function cancelReset() {
+  document.getElementById('reset-confirm-box').style.display = 'none';
+  document.getElementById('reset-btn-step1').style.display = 'flex';
+}
+
+function doResetProgress() {
+  state.clips = [];
+  state.submittedClips = [];
+  state.jar = 0;
+  state.streak = 0;
+  state.spinQueue = [];
+  state.currentSpinTier = null;
+  state.habitsCompletedTotal = 0;
+  state.habits.forEach(h => { h.done = false; });
+  localStorage.removeItem(SAVE_KEY);
+  cancelReset();
+  showToast('Progress wiped. Fresh start! 💪');
+  renderAll();
+  renderSetup();
+}
+
+window.addEventListener('load', () => {
+  loadState();
+  renderAll();
+  drawWheel('wheelCanvas', WHEEL_SEGMENTS, 0, 320);
+
+  setTimeout(() => {
+    showToast('👋 Tap habits to complete them & earn clips!');
+  }, 1000);
+});
+</script>
+</body>
+</html>
