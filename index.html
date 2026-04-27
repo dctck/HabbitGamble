@@ -348,7 +348,12 @@ h2{font-size:1.4rem;font-weight:700;}
   text-align:center;transition:all 0.3s;
 }
 
-/* Shimmer on cards */
+/* Odometer minimal theme */
+.odometer.odometer-auto-theme,.odometer.odometer-theme-minimal{font-family:inherit;line-height:1em;display:inline-block;position:relative}.odometer.odometer-auto-theme .odometer-digit,.odometer.odometer-theme-minimal .odometer-digit{display:inline-block;position:relative}.odometer.odometer-auto-theme .odometer-digit .odometer-digit-spacer,.odometer.odometer-theme-minimal .odometer-digit .odometer-digit-spacer{display:inline-block;visibility:hidden}.odometer.odometer-auto-theme .odometer-digit .odometer-digit-inner,.odometer.odometer-theme-minimal .odometer-digit .odometer-digit-inner{text-align:left;display:block;position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden}.odometer.odometer-auto-theme .odometer-digit .odometer-ribbon,.odometer.odometer-theme-minimal .odometer-digit .odometer-ribbon{display:block}.odometer.odometer-auto-theme .odometer-digit .odometer-ribbon-inner,.odometer.odometer-theme-minimal .odometer-digit .odometer-ribbon-inner{display:block;-webkit-backface-visibility:hidden}.odometer.odometer-auto-theme .odometer-digit .odometer-value,.odometer.odometer-theme-minimal .odometer-digit .odometer-value{display:block;-webkit-transform:translateZ(0)}.odometer.odometer-auto-theme .odometer-digit .odometer-value.odometer-last-value,.odometer.odometer-theme-minimal .odometer-digit .odometer-value.odometer-last-value{position:absolute}.odometer.odometer-auto-theme.odometer-animating-up .odometer-ribbon-inner,.odometer.odometer-theme-minimal.odometer-animating-up .odometer-ribbon-inner{-webkit-transition:all 1000ms ease-in-out;-moz-transition:all 1000ms ease-in-out;-ms-transition:all 1000ms ease-in-out;-o-transition:all 1000ms ease-in-out;transition:all 1000ms ease-in-out}.odometer.odometer-auto-theme.odometer-animating-up.odometer-animating .odometer-ribbon-inner,.odometer.odometer-theme-minimal.odometer-animating-up.odometer-animating .odometer-ribbon-inner{-webkit-transform:translateY(-100%);-moz-transform:translateY(-100%);-ms-transform:translateY(-100%);-o-transform:translateY(-100%);transform:translateY(-100%)}.odometer.odometer-auto-theme.odometer-animating-down .odometer-ribbon-inner,.odometer.odometer-theme-minimal.odometer-animating-down .odometer-ribbon-inner{-webkit-transform:translateY(-100%);-moz-transform:translateY(-100%);-ms-transform:translateY(-100%);-o-transform:translateY(-100%);transform:translateY(-100%)}.odometer.odometer-auto-theme.odometer-animating-down.odometer-animating .odometer-ribbon-inner,.odometer.odometer-theme-minimal.odometer-animating-down.odometer-animating .odometer-ribbon-inner{-webkit-transition:all 1000ms ease-in-out;-moz-transition:all 1000ms ease-in-out;-ms-transition:all 1000ms ease-in-out;-o-transition:all 1000ms ease-in-out;transition:all 1000ms ease-in-out;-webkit-transform:translateY(0);-moz-transform:translateY(0);-ms-transform:translateY(0);-o-transform:translateY(0);transform:translateY(0)}
+/* Override odometer color to match our gold theme */
+#jar-amount.odometer{color:var(--gold);font-family:'Outfit',sans-serif;font-size:2rem;font-weight:800;letter-spacing:-0.02em;line-height:1;}
+.clip.selected svg{filter:drop-shadow(0 0 8px var(--mint));outline:2px solid var(--mint);border-radius:4px;}
+.clip.selected{transform:scale(1.15);}
 @keyframes shimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
 .shimmer{
   background:linear-gradient(90deg,transparent,rgba(255,255,255,0.04),transparent);
@@ -361,63 +366,61 @@ h2{font-size:1.4rem;font-weight:700;}
 
 <!-- ============ SCREEN: DASHBOARD ============ -->
 <div id="screen-dashboard" class="screen active">
-  <div class="topbar">
-    <div>
-      <div style="font-size:1.3rem;font-weight:800;letter-spacing:-0.02em;">HABIT<span style="color:var(--mint)">SPIN</span></div>
-      <div style="font-size:0.875rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-top:2px;">Make habits addictive</div>
+  <div style="position:sticky;top:0;z-index:20;background:var(--bg);">
+    <div class="topbar">
+      <div>
+        <div style="font-size:1.3rem;font-weight:800;letter-spacing:-0.02em;">HABIT<span style="color:var(--mint)">SPIN</span></div>
+        <div id="nav-date" style="font-size:0.875rem;color:#a0a8c0;font-weight:600;margin-top:2px;"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div id="streak-badge" class="streak-badge" style="display:none;">🔥 <span id="streak-count">0</span> streak</div>
+        <button class="btn btn-ghost btn-sm" onclick="showScreen('setup')" style="border-radius:12px;">⚙️ Setup</button>
+      </div>
     </div>
-    <div style="display:flex;align-items:center;gap:10px;">
-      <div id="streak-badge" class="streak-badge" style="display:none;">🔥 <span id="streak-count">0</span> streak</div>
-      <button class="btn btn-ghost btn-sm" onclick="showScreen('setup')" style="border-radius:12px;">⚙️ Setup</button>
+
+    <!-- JAR + STATS ROW (sticky) -->
+    <div style="padding:0 20px 12px;">
+      <div class="card" style="display:flex;gap:16px;align-items:center;">
+        <!-- Jar visualization -->
+        <div style="position:relative;flex-shrink:0;">
+          <div class="jar-wrap">
+            <svg id="jar-svg" class="jar-svg" viewBox="0 0 64 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="10" y="12" width="44" height="58" rx="8" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+              <clipPath id="jarClip"><rect x="11" y="13" width="42" height="56" rx="7"/></clipPath>
+              <rect id="jarFill" x="11" y="69" width="42" height="0" rx="0" fill="url(#jarGrad)" clip-path="url(#jarClip)" class="jar-fill"/>
+              <defs>
+                <linearGradient id="jarGrad" x1="0" y1="0" x2="0" y2="1" gradientTransform="rotate(180)">
+                  <stop offset="0%" stop-color="#f8b722" stop-opacity="0.9"/>
+                  <stop offset="100%" stop-color="#f97316" stop-opacity="0.7"/>
+                </linearGradient>
+              </defs>
+              <g id="jar-goal-markers"></g>
+              <rect x="6" y="6" width="52" height="10" rx="4" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+              <rect x="14" y="18" width="4" height="40" rx="2" fill="rgba(255,255,255,0.06)"/>
+            </svg>
+          </div>
+        </div>
+        <!-- Jar stats -->
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:0.875rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Prize Jar</div>
+          <div style="font-size:2rem;font-weight:800;color:var(--gold);letter-spacing:-0.02em;line-height:1;margin:4px 0;">$<span id="jar-amount">0</span></div>
+          <div style="font-size:1rem;color:var(--muted);margin-bottom:8px;">
+            Goal: <span id="jar-next-name" style="color:var(--text);font-weight:700;">Mini Treat</span>
+            <span id="jar-target" style="color:var(--gold);"></span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="jar-progress" style="width:0%;background:linear-gradient(90deg,var(--orange),var(--gold));"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+            <div id="jar-milestone-label" style="font-size:0.875rem;color:var(--muted);"></div>
+            <div id="jar-journey-count" style="font-size:0.875rem;color:var(--muted);display:none;">🏅 Journey <span id="jar-journey-num">0</span></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div style="padding:8px 20px 20px;flex:1;display:flex;flex-direction:column;gap:16px;">
-    
-    <!-- JAR + STATS ROW -->
-    <div class="card" style="display:flex;gap:16px;align-items:center;">
-      <!-- Jar visualization -->
-      <div style="position:relative;flex-shrink:0;">
-        <div class="jar-wrap">
-          <svg id="jar-svg" class="jar-svg" viewBox="0 0 64 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <!-- Jar body -->
-            <rect x="10" y="12" width="44" height="58" rx="8" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
-            <!-- Fill -->
-            <clipPath id="jarClip"><rect x="11" y="13" width="42" height="56" rx="7"/></clipPath>
-            <rect id="jarFill" x="11" y="69" width="42" height="0" rx="0" fill="url(#jarGrad)" clip-path="url(#jarClip)" class="jar-fill"/>
-            <defs>
-              <linearGradient id="jarGrad" x1="0" y1="0" x2="0" y2="1" gradientTransform="rotate(180)">
-                <stop offset="0%" stop-color="#f8b722" stop-opacity="0.9"/>
-                <stop offset="100%" stop-color="#f97316" stop-opacity="0.7"/>
-              </linearGradient>
-            </defs>
-            <!-- Goal marker lines (updated by JS) -->
-            <g id="jar-goal-markers"></g>
-            <!-- Lid -->
-            <rect x="6" y="6" width="52" height="10" rx="4" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
-            <!-- Shine -->
-            <rect x="14" y="18" width="4" height="40" rx="2" fill="rgba(255,255,255,0.06)"/>
-          </svg>
-        </div>
-      </div>
-      
-      <!-- Jar stats -->
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:0.875rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Prize Jar</div>
-        <div style="font-size:2rem;font-weight:800;color:var(--gold);letter-spacing:-0.02em;line-height:1;margin:4px 0;" id="jar-amount">$0</div>
-        <div style="font-size:1rem;color:var(--muted);margin-bottom:8px;">
-          Goal: <span id="jar-next-name" style="color:var(--text);font-weight:700;">Mini Treat</span>
-          <span id="jar-target" style="color:var(--gold);"></span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress-fill" id="jar-progress" style="width:0%;background:linear-gradient(90deg,var(--orange),var(--gold));"></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
-          <div id="jar-milestone-label" style="font-size:0.875rem;color:var(--muted);"></div>
-          <div id="jar-journey-count" style="font-size:0.875rem;color:var(--muted);display:none;">🏅 Journey <span id="jar-journey-num">0</span></div>
-        </div>
-      </div>
-    </div>
+  <div style="padding:0 20px 20px;flex:1;display:flex;flex-direction:column;gap:16px;overflow-y:auto;">
 
     <!-- HABITS -->
     <div>
@@ -433,29 +436,30 @@ h2{font-size:1.4rem;font-weight:700;}
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
         <div>
           <div style="font-size:0.875rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);">Clip Collection</div>
-          <div style="font-size:0.875rem;color:var(--muted);margin-top:2px;"><span id="clip-count">0</span> clips earned</div>
+          <div style="font-size:0.875rem;color:var(--muted);margin-top:2px;">Tap clips to select</div>
         </div>
-        <div id="match-indicator" class="match-indicator" style="background:rgba(255,255,255,0.05);color:var(--muted);">No match</div>
+        <div style="font-size:0.875rem;font-weight:700;color:var(--muted);">Total: <span id="clip-count">0</span></div>
       </div>
       <div id="clip-inventory" class="scroll-h" style="min-height:52px;align-items:center;">
         <div style="color:var(--muted);font-size:0.875rem;">Complete habits to earn clips!</div>
       </div>
     </div>
 
-    <!-- SUBMIT / DROP ZONE -->
+    <!-- SELECTED / DROP ZONE -->
     <div>
       <div style="font-size:0.875rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:8px;">
-        Drag clips here to unlock tiers
+        Selected Clips
       </div>
       <div id="drop-zone" class="drop-zone">
-        <div class="drop-zone-hint" id="drop-hint">Drop clips to cash in →</div>
+        <div class="drop-zone-hint" id="drop-hint">Cash In</div>
       </div>
-      
-      <!-- Tier explanation -->
-      <div id="tier-info" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
-        <div class="tier-badge tier-1">2 same → T2</div>
-        <div class="tier-badge tier-2">3 same → T3</div>
-        <div class="tier-badge tier-jackpot">⭐ Gold → T3</div>
+
+      <!-- Tier pills: 2 rows × 2 -->
+      <div id="tier-info" style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:stretch;">
+        <div class="tier-badge tier-1" style="justify-content:center;padding:10px;">1 same → T1</div>
+        <div class="tier-badge tier-2" style="justify-content:center;padding:10px;">2 same → T2</div>
+        <div class="tier-badge tier-2" style="justify-content:center;padding:10px;background:rgba(75,124,247,0.15);color:var(--blue);border-color:rgba(75,124,247,0.3);">3 same → T3</div>
+        <div class="tier-badge tier-jackpot" style="justify-content:center;padding:10px;">⭐ Gold → T3</div>
       </div>
       <!-- Spin preview -->
       <div id="spin-preview" style="margin-top:10px;display:none;">
@@ -467,7 +471,7 @@ h2{font-size:1.4rem;font-weight:700;}
     <!-- SPIN BUTTON -->
     <div style="display:flex;gap:10px;margin-top:4px;">
       <button id="spin-btn" class="btn btn-primary" style="flex:1;font-size:1.1rem;font-weight:800;" onclick="goToWheel()">
-        🎰 SPIN
+        Spin &nbsp;<span id="spin-btn-count" style="opacity:0.8;font-size:0.9rem;"></span>
       </button>
       <button id="clear-btn" class="btn btn-ghost" onclick="clearDropZone()" style="border-radius:16px;padding:16px;">🗑️</button>
     </div>
@@ -478,7 +482,7 @@ h2{font-size:1.4rem;font-weight:700;}
 <!-- ============ SCREEN: WHEEL ============ -->
 <div id="screen-wheel" class="screen" style="align-items:center;overflow:hidden;">
   <div class="topbar" style="width:100%;">
-    <button class="back-btn" onclick="showScreen('dashboard')" style="width:auto;padding:0 14px;font-size:0.875rem;font-weight:700;">Back</button>
+    <div style="width:60px;"></div>
     <div style="text-align:center;">
       <div style="font-size:0.875rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">Spins Left</div>
       <div id="wheel-spins-left" style="font-size:1.5rem;font-weight:800;line-height:1.1;">0</div>
@@ -641,7 +645,8 @@ h2{font-size:1.4rem;font-weight:700;}
     <div style="font-size:0.875rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;">Your Reward</div>
     <div id="result-reward-text" style="font-size:1.2rem;font-weight:700;"></div>
   </div>
-  <button class="btn btn-primary" style="width:100%;max-width:280px;" onclick="claimResult()">Claim & Continue</button>
+  <button id="btn-continue-spin" class="btn btn-primary" style="width:100%;max-width:280px;" onclick="claimResult()">Continue Spin</button>
+  <button class="btn btn-ghost" style="width:100%;max-width:280px;" onclick="claimAndExit()">Claim & Exit</button>
 </div>
 
 <!-- DRAG GHOST -->
@@ -693,6 +698,10 @@ let state = {
   jarCompleteReward: 'Moonshot achieved! Claim your big prize 🎉',
   jarJourney: 0,           // how many jar journeys completed
   spinQueue: [],
+  clipsUsedThisRound: 0,
+  spinsCompletedThisRound: 0,
+  spinClipCosts: [],
+  originalSubmittedClips: [],
   currentSpinTier: null,
   spinning: false,
   lastResult: null,
@@ -813,28 +822,25 @@ let wheelRotation = 0;
 let isSpinning = false;
 function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
 
-// Build spin queue from submitted clips
+// Build spin queue from submitted clips — returns [{tier, cost}]
 function calculateSpinQueue() {
   const clips = [...state.submittedClips];
   const queue = [];
 
-  // Gold clips → T3 each
   const golds = clips.filter(c => c === 'gold');
-  golds.forEach(() => queue.push('T3'));
+  golds.forEach(() => queue.push({tier:'T3', cost:1}));
 
-  // Group non-gold by color
   const nonGold = clips.filter(c => c !== 'gold');
   const counts = {};
   nonGold.forEach(c => counts[c] = (counts[c] || 0) + 1);
 
-  // Sort by count descending so best matches go first
   Object.entries(counts)
     .sort((a, b) => b[1] - a[1])
     .forEach(([color, count]) => {
       let rem = count;
-      while (rem >= 3) { queue.push('T3'); rem -= 3; }
-      if (rem === 2) { queue.push('T2'); rem = 0; }
-      if (rem === 1) { queue.push('T1'); }
+      while (rem >= 3) { queue.push({tier:'T3', cost:3}); rem -= 3; }
+      if (rem === 2) { queue.push({tier:'T2', cost:2}); rem = 0; }
+      if (rem === 1) { queue.push({tier:'T1', cost:1}); }
     });
 
   return queue;
@@ -879,7 +885,8 @@ function renderWheelQueueUI() {
   const tierColors = {T1:'var(--red)',T2:'var(--orange)',T3:'var(--blue)',JACKPOT:'var(--gold)'};
   const pills = document.getElementById('spins-remaining-pills');
   if (pills) {
-    pills.innerHTML = queue.map((t, i) => {
+    pills.innerHTML = queue.map((entry, i) => {
+      const t = entry.tier;
       const isCurrent = i === 0;
       const label = t === 'JACKPOT' ? 'JP' : t;
       return `<div style="
@@ -901,7 +908,8 @@ function spinMainWheel() {
   isSpinning = true;
 
   // Consume the first spin from queue
-  state.currentSpinTier = state.spinQueue.shift();
+  const spinEntry = state.spinQueue.shift();
+  state.currentSpinTier = spinEntry.tier;
   renderWheelQueueUI();
 
   const mainSpinBtn = document.getElementById('main-spin-btn');
@@ -959,8 +967,8 @@ function spinMainWheel() {
       state.spinning = false;
       isSpinning = false;
       state.lastResult = result;
-      if (nearMiss) setTimeout(() => announceLanding(result, () => showResult(result)), 300);
-      else setTimeout(() => announceLanding(result, () => showResult(result)), 300);
+      // Highlight winning segment on canvas, then show result
+      highlightWinningSegment(result, targetSeg.i, () => showResult(result));
     }
   }
 
@@ -1051,35 +1059,53 @@ function drawWheel(canvasId, segments, rotation, size) {
 }
 
 
-// Brief landing announcement so it's crystal-clear what segment was hit
-function announceLanding(result, callback) {
-  const names = {T1:'TIER 1', T2:'TIER 2', T3:'TIER 3', BONUS:'⚡ BONUS!', JACKPOT:'💥 JACKPOT!'};
-  const name  = names[result] || result;
+// Visually highlight the winning segment on the canvas, then call onDone
+function highlightWinningSegment(result, segIndex, onDone) {
+  const canvas = document.getElementById('wheelCanvas');
+  if (!canvas) { onDone(); return; }
+  const ctx = canvas.getContext('2d');
+  const size = 320;
+  const cx = size / 2, cy = size / 2, r = size / 2 - 4;
+  const totalSegs = WHEEL_SEGMENTS.length;
+  const arc = (2 * Math.PI) / totalSegs;
+  const startAngle = wheelRotation + segIndex * arc - Math.PI / 2;
+  const endAngle   = startAngle + arc;
 
-  const el = document.createElement('div');
-  el.style.cssText = `
-    position:fixed;top:45%;left:50%;transform:translate(-50%,-50%) scale(0.5);
-    font-size:2.6rem;font-weight:900;color:#00e5a0;z-index:400;text-align:center;
-    -webkit-text-stroke:4px white;paint-order:stroke fill;
-    text-shadow:0 4px 20px rgba(0,0,0,0.95);
-    pointer-events:none;
-    opacity:0;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1),opacity 0.3s;
-  `;
-  el.textContent = name;
-  document.body.appendChild(el);
+  let frame = 0;
+  const totalFrames = 28; // ~700ms at 40ms/frame
+  const flashInterval = setInterval(() => {
+    // Redraw wheel normally
+    drawWheel('wheelCanvas', WHEEL_SEGMENTS, wheelRotation, size);
 
-  requestAnimationFrame(() => {
-    el.style.transform = 'translate(-50%,-50%) scale(1)';
-    el.style.opacity = '1';
-  });
+    // Draw glowing highlight arc over winning segment
+    const alpha = 0.5 + 0.5 * Math.sin(frame * 0.45);
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, startAngle, endAngle);
+    ctx.closePath();
+    ctx.fillStyle = `rgba(255,255,255,${alpha * 0.25})`;
+    ctx.fill();
 
-  setTimeout(() => {
-    el.style.transition = 'opacity 0.25s,transform 0.25s';
-    el.style.opacity = '0';
-    el.style.transform = 'translate(-50%,-50%) scale(0.8)';
-    setTimeout(() => { el.remove(); callback(); }, 250);
-  }, 900);
+    // Bright border on the winning segment edges
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, startAngle, endAngle);
+    ctx.closePath();
+    ctx.strokeStyle = `rgba(255,255,255,${0.6 + 0.4 * alpha})`;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.restore();
+
+    frame++;
+    if (frame >= totalFrames) {
+      clearInterval(flashInterval);
+      onDone();
+    }
+  }, 25);
 }
+
+function showNearMiss(cb) { cb(); } // no-op, kept for safety
 
 function showResult(result) {
   // BONUS: skip overlay entirely, jump straight to bonus screen
@@ -1115,17 +1141,54 @@ function claimResult() {
   document.getElementById('result-overlay').classList.remove('active');
   state.spinning = false;
   isSpinning = false;
+  state.spinsCompletedThisRound = (state.spinsCompletedThisRound || 0) + 1;
 
   if (state.spinQueue.length > 0) {
-    // More spins remain — stay on wheel, re-enable button
+    // Update button: last spin = no more "Continue Spin"
+    const btn = document.getElementById('btn-continue-spin');
+    if (btn) btn.textContent = state.spinQueue.length > 0 ? 'Continue Spin' : 'Done';
     showScreen('wheel');
+    setTimeout(() => spinMainWheel(), 600);
   } else {
-    // All spins done — clear submitted clips and go home
-    state.submittedClips = [];
-    calculateTier();
-    renderDropZone();
-    showScreen('dashboard');
-    renderAll();
+    finishRoundAndGoHome();
+  }
+}
+
+function claimAndExit() {
+  document.getElementById('result-overlay').classList.remove('active');
+  state.spinning = false;
+  isSpinning = false;
+  state.spinsCompletedThisRound = (state.spinsCompletedThisRound || 0) + 1;
+
+  const costs = state.spinClipCosts || [];
+  const usedCost = costs.slice(0, state.spinsCompletedThisRound).reduce((a,b)=>a+b, 0);
+
+  const orig = state.originalSubmittedClips || [];
+  state.submittedClips = orig.slice(usedCost);
+  state.spinQueue = [];
+
+  const prevJar = state.jar;
+  const newJar  = prevJar + usedCost;
+
+  calculateTier();
+
+  // 1. Navigate and render with OLD jar value
+  showScreen('dashboard');
+  renderAll();
+
+  if (usedCost > 0) {
+    // 2. Double-rAF to animate
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      state.jar = newJar;
+      checkJarGoalReached(prevJar);
+      saveState();
+      updateJarAmount(newJar, true);
+      updateJar();
+      playSound('win-t1');
+    }));
+  } else {
+    state.jar = newJar;
+    saveState();
   }
 }
 
@@ -1217,12 +1280,9 @@ function returnFromBonus() {
 
   if (state.spinQueue.length > 0) {
     showScreen('wheel');
+    setTimeout(() => spinMainWheel(), 600);
   } else {
-    state.submittedClips = [];
-    calculateTier();
-    renderDropZone();
-    showScreen('dashboard');
-    renderAll();
+    finishRoundAndGoHome();
   }
 }
 
@@ -1394,12 +1454,9 @@ function completeHabit(id) {
 
   const newClip = Math.random() < 0.05 ? CLIP_GOLD : CLIP_COLORS[Math.floor(Math.random() * CLIP_COLORS.length)];
   state.clips.push(newClip);
-  const prevJar = state.jar;
-  state.jar += 1;
 
   showClipPopup(newClip);
   playSound(newClip === CLIP_GOLD ? 'gold-clip' : 'clip');
-  checkJarGoalReached(prevJar);
   saveState();
   renderAll();
 }
@@ -1453,7 +1510,6 @@ function renderInventory(skipSort = false) {
     return;
   }
 
-  // Only re-sort when adding clips (skipSort=true when removing)
   if (!skipSort) {
     const counts = {};
     state.clips.forEach(c => counts[c] = (counts[c] || 0) + 1);
@@ -1471,7 +1527,8 @@ function renderInventory(skipSort = false) {
     clip.innerHTML = createClipSVG(color);
     clip.dataset.index = i;
     clip.dataset.color = color;
-    setupDrag(clip, i, 'inventory');
+    clip.style.cursor = 'pointer';
+    clip.onclick = () => tapSelectClip(i);
     inv.appendChild(clip);
   });
 }
@@ -1510,6 +1567,8 @@ function updateSpinPreview() {
   const queue = calculateSpinQueue();
   if (queue.length === 0) {
     preview.style.display = 'none';
+    const countEl = document.getElementById('spin-btn-count');
+    if (countEl) countEl.textContent = '';
     return;
   }
 
@@ -1517,16 +1576,21 @@ function updateSpinPreview() {
   const tierColors = {T1:'var(--red)',T2:'var(--orange)',T3:'var(--blue)',JACKPOT:'var(--gold)'};
   const tierLabels = {T1:'T1',T2:'T2',T3:'T3',JACKPOT:'JP'};
 
-  pills.innerHTML = queue.map(t => `
+  pills.innerHTML = queue.map(entry => `
     <div style="padding:5px 12px;border-radius:8px;font-size:0.875rem;font-weight:800;
-      background:${tierColors[t]}22;color:${tierColors[t]};border:1px solid ${tierColors[t]}44;">
-      ${tierLabels[t]}
+      background:${tierColors[entry.tier]}22;color:${tierColors[entry.tier]};border:1px solid ${tierColors[entry.tier]}44;">
+      ${tierLabels[entry.tier]}
     </div>
   `).join('') + `<div style="font-size:0.875rem;color:var(--muted);margin-left:4px;">${queue.length} spin${queue.length > 1 ? 's' : ''}</div>`;
+
+  // Update spin button label
+  const countEl = document.getElementById('spin-btn-count');
+  if (countEl) countEl.textContent = `x${queue.length}`;
 }
 
 function updateMatchIndicator() {
   const ind = document.getElementById('match-indicator');
+  if (!ind) return; // element removed from dashboard
   const colors = state.submittedClips;
 
   if (colors.length === 0) {
@@ -1568,11 +1632,22 @@ function calculateTier() {
   updateSpinPreview();
 }
 
+function tapSelectClip(i) {
+  initAudio();
+  const color = state.clips.splice(i, 1)[0];
+  if (!color) return;
+  state.submittedClips.push(color);
+  calculateTier();
+  playSound('drop');
+  renderInventory(true); // don't re-sort — removal
+  renderDropZone();
+}
+
 function clearDropZone() {
   state.clips.push(...state.submittedClips);
   state.submittedClips = [];
   calculateTier();
-  renderInventory(false); // sort — clips added back to collection
+  renderInventory(false); // sort — clips added back
   renderDropZone();
 }
 
@@ -1580,7 +1655,7 @@ function returnClipToInventory(i) {
   const clip = state.submittedClips.splice(i, 1)[0];
   state.clips.push(clip);
   calculateTier();
-  renderInventory(false); // sort — clip added back to collection
+  renderInventory(false); // sort — clip added back
   renderDropZone();
   playSound('drop');
 }
@@ -1721,7 +1796,7 @@ function updateJar() {
   const nextGoal = sorted.find(g => g.amount > state.jar);
   const isAllDone = !nextGoal; // jar complete
 
-  document.getElementById('jar-amount').textContent = `$${state.jar}`;
+  updateJarAmount(state.jar);
 
   if (isAllDone) {
     document.getElementById('jar-next-name').textContent = '🎉 Complete!';
@@ -1740,8 +1815,7 @@ function updateJar() {
     const doneCount = sorted.filter(g => state.jar >= g.amount).length;
     const icons = ['','🎯','🏆','🌙'];
     document.getElementById('jar-milestone-label').textContent =
-      doneCount > 0 ? `${icons[doneCount]} ${doneCount}/${sorted.length} goals reached` :
-      sorted.length > 1 ? `${sorted.length} goals set` : '';
+      doneCount > 0 ? `${icons[doneCount]} ${doneCount}/${sorted.length} goals reached` : '';
   }
 
   // Journey count
@@ -2117,6 +2191,8 @@ function showScreen(name) {
     const spinBtn = document.getElementById('main-spin-btn');
     spinBtn.disabled = state.spinQueue.length === 0 || isSpinning;
     spinBtn.textContent = state.spinQueue.length === 0 ? 'No Spins Left' : 'SPIN!';
+    const contBtn = document.getElementById('btn-continue-spin');
+    if (contBtn) contBtn.textContent = state.spinQueue.length > 1 ? 'Continue Spin' : 'Continue';
   }
   if (name === 'bonus') {
     drawBonusWheel(bonusWheelRotation);
@@ -2132,12 +2208,83 @@ function goToWheel() {
   initAudio();
   const queue = calculateSpinQueue();
   if (queue.length === 0) {
-    showToast('Submit some clips first to earn spins!');
+    showToast('Select some clips first to earn spins!');
     return;
   }
   state.spinQueue = queue;
   state.currentSpinTier = null;
+  state.clipsUsedThisRound = state.submittedClips.length;
+  state.originalSubmittedClips = [...state.submittedClips]; // for partial exit
+  state.spinClipCosts = queue.map(e => e.cost);             // clip cost per spin
+  state.spinsCompletedThisRound = 0;
   showScreen('wheel');
+  setTimeout(() => spinMainWheel(), 600);
+}
+
+function finishRoundAndGoHome() {
+  const costs = state.spinClipCosts || [];
+  const completed = state.spinsCompletedThisRound || 0;
+  const usedCost = costs.slice(0, completed).reduce((a,b)=>a+b, 0);
+
+  state.submittedClips = [];
+  state.clipsUsedThisRound = 0;
+  state.spinsCompletedThisRound = 0;
+  calculateTier();
+
+  const prevJar = state.jar;
+  const newJar  = prevJar + usedCost;
+
+  // 1. Navigate and render with the OLD value — odometer snaps to prevJar (no animation)
+  showScreen('dashboard');
+  renderAll();
+
+  if (usedCost > 0) {
+    // 2. Double-rAF: first frame commits the old value paint, second triggers CSS transition
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      state.jar = newJar;
+      checkJarGoalReached(prevJar);
+      saveState();
+      updateJarAmount(newJar, true); // NOW the CSS transition fires from prevJar → newJar
+      updateJar(); // update progress bar, milestones etc (uses state.jar = newJar now)
+      playSound('win-t1');
+    }));
+  } else {
+    state.jar = newJar;
+    saveState();
+  }
+}
+
+
+// ==========================================
+// ODOMETER (inlined from uploaded odometer.min.js)
+// ==========================================
+/*! odometer 0.4.7 */
+(function(){var a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G=[].slice;q='<span class="odometer-value"></span>',n='<span class="odometer-ribbon"><span class="odometer-ribbon-inner">'+q+"</span></span>",d='<span class="odometer-digit"><span class="odometer-digit-spacer">8</span><span class="odometer-digit-inner">'+n+"</span></span>",g='<span class="odometer-formatting-mark"></span>',c="(,ddd).dd",h=/^\(?([^)]*)\)?(?:(.)(d+))?$/,i=30,f=2e3,a=20,j=2,e=.5,k=1e3/i,b=1e3/a,o="transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd",y=document.createElement("div").style,p=null!=y.transition||null!=y.webkitTransition||null!=y.mozTransition||null!=y.oTransition,w=window.requestAnimationFrame||window.mozRequestAnimationFrame||window.webkitRequestAnimationFrame||window.msRequestAnimationFrame,l=window.MutationObserver||window.WebKitMutationObserver||window.MozMutationObserver,s=function(a){var b;return b=document.createElement("div"),b.innerHTML=a,b.children[0]},v=function(a,b){return a.className=a.className.replace(new RegExp("(^| )"+b.split(" ").join("|")+"( |$)","gi")," ")},r=function(a,b){return v(a,b),a.className+=" "+b},z=function(a,b){var c;return null!=document.createEvent?(c=document.createEvent("HTMLEvents"),c.initEvent(b,!0,!0),a.dispatchEvent(c)):void 0},u=function(){var a,b;return null!=(a=null!=(b=window.performance)&&"function"==typeof b.now?b.now():void 0)?a:+new Date},x=function(a,b){return null==b&&(b=0),b?(a*=Math.pow(10,b),a+=.5,a=Math.floor(a),a/=Math.pow(10,b)):Math.round(a)},A=function(a){return 0>a?Math.ceil(a):Math.floor(a)},t=function(a){return a-x(a)},C=!1,(B=function(){var a,b,c,d,e;if(!C&&null!=window.jQuery){for(C=!0,d=["html","text"],e=[],b=0,c=d.length;c>b;b++)a=d[b],e.push(function(a){var b;return b=window.jQuery.fn[a],window.jQuery.fn[a]=function(a){var c;return null==a||null==(null!=(c=this[0])?c.odometer:void 0)?b.apply(this,arguments):this[0].odometer.update(a)}}(a));return e}})(),setTimeout(B,0),m=function(){function a(b){var c,d,e,g,h,i,l,m,n,o,p=this;if(this.options=b,this.el=this.options.el,null!=this.el.odometer)return this.el.odometer;this.el.odometer=this,m=a.options;for(d in m)g=m[d],null==this.options[d]&&(this.options[d]=g);null==(h=this.options).duration&&(h.duration=f),this.MAX_VALUES=this.options.duration/k/j|0,this.resetFormat(),this.value=this.cleanValue(null!=(n=this.options.value)?n:""),this.renderInside(),this.render();try{for(o=["innerHTML","innerText","textContent"],i=0,l=o.length;l>i;i++)e=o[i],null!=this.el[e]&&!function(a){return Object.defineProperty(p.el,a,{get:function(){var b;return"innerHTML"===a?p.inside.outerHTML:null!=(b=p.inside.innerText)?b:p.inside.textContent},set:function(a){return p.update(a)}})}(e)}catch(q){c=q,this.watchForMutations()}}return a.prototype.renderInside=function(){return this.inside=document.createElement("div"),this.inside.className="odometer-inside",this.el.innerHTML="",this.el.appendChild(this.inside)},a.prototype.watchForMutations=function(){var a,b=this;if(null!=l)try{return null==this.observer&&(this.observer=new l(function(){var a;return a=b.el.innerText,b.renderInside(),b.render(b.value),b.update(a)})),this.watchMutations=!0,this.startWatchingMutations()}catch(c){a=c}},a.prototype.startWatchingMutations=function(){return this.watchMutations?this.observer.observe(this.el,{childList:!0}):void 0},a.prototype.stopWatchingMutations=function(){var a;return null!=(a=this.observer)?a.disconnect():void 0},a.prototype.cleanValue=function(a){var b;return"string"==typeof a&&(a=a.replace(null!=(b=this.format.radix)?b:".","<radix>"),a=a.replace(/[.,]/g,""),a=a.replace("<radix>","."),a=parseFloat(a,10)||0),x(a,this.format.precision)},a.prototype.bindTransitionEnd=function(){var a,b,c,d,e,f,g=this;if(!this.transitionEndBound){for(this.transitionEndBound=!0,b=!1,e=o.split(" "),f=[],c=0,d=e.length;d>c;c++)a=e[c],f.push(this.el.addEventListener(a,function(){return b?!0:(b=!0,setTimeout(function(){return g.render(),b=!1,z(g.el,"odometerdone")},0),!0)},!1));return f}},a.prototype.resetFormat=function(){var a,b,d,e,f,g,i,j;if(a=null!=(i=this.options.format)?i:c,a||(a="d"),d=h.exec(a),!d)throw new Error("Odometer: Unparsable digit format");return j=d.slice(1,4),g=j[0],f=j[1],b=j[2],e=(null!=b?b.length:void 0)||0,this.format={repeating:g,radix:f,precision:e}},a.prototype.render=function(a){var b,c,d,e,f,g,h;for(null==a&&(a=this.value),this.stopWatchingMutations(),this.resetFormat(),this.inside.innerHTML="",f=this.options.theme,b=this.el.className.split(" "),e=[],g=0,h=b.length;h>g;g++)c=b[g],c.length&&((d=/^odometer-theme-(.+)$/.exec(c))?f=d[1]:/^odometer(-|$)/.test(c)||e.push(c));return e.push("odometer"),p||e.push("odometer-no-transitions"),e.push(f?"odometer-theme-"+f:"odometer-auto-theme"),this.el.className=e.join(" "),this.ribbons={},this.formatDigits(a),this.startWatchingMutations()},a.prototype.formatDigits=function(a){var b,c,d,e,f,g,h,i,j,k;if(this.digits=[],this.options.formatFunction)for(d=this.options.formatFunction(a),j=d.split("").reverse(),f=0,h=j.length;h>f;f++)c=j[f],c.match(/0-9/)?(b=this.renderDigit(),b.querySelector(".odometer-value").innerHTML=c,this.digits.push(b),this.insertDigit(b)):this.addSpacer(c);else for(e=!this.format.precision||!t(a)||!1,k=a.toString().split("").reverse(),g=0,i=k.length;i>g;g++)b=k[g],"."===b&&(e=!0),this.addDigit(b,e)},a.prototype.update=function(a){var b,c=this;return a=this.cleanValue(a),(b=a-this.value)?(v(this.el,"odometer-animating-up odometer-animating-down odometer-animating"),b>0?r(this.el,"odometer-animating-up"):r(this.el,"odometer-animating-down"),this.stopWatchingMutations(),this.animate(a),this.startWatchingMutations(),setTimeout(function(){return c.el.offsetHeight,r(c.el,"odometer-animating")},0),this.value=a):void 0},a.prototype.renderDigit=function(){return s(d)},a.prototype.insertDigit=function(a,b){return null!=b?this.inside.insertBefore(a,b):this.inside.children.length?this.inside.insertBefore(a,this.inside.children[0]):this.inside.appendChild(a)},a.prototype.addSpacer=function(a,b,c){var d;return d=s(g),d.innerHTML=a,c&&r(d,c),this.insertDigit(d,b)},a.prototype.addDigit=function(a,b){var c,d,e,f;if(null==b&&(b=!0),"-"===a)return this.addSpacer(a,null,"odometer-negation-mark");if("."===a)return this.addSpacer(null!=(f=this.format.radix)?f:".",null,"odometer-radix-mark");if(b)for(e=!1;;){if(!this.format.repeating.length){if(e)throw new Error("Bad odometer format without digits");this.resetFormat(),e=!0}if(c=this.format.repeating[this.format.repeating.length-1],this.format.repeating=this.format.repeating.substring(0,this.format.repeating.length-1),"d"===c)break;this.addSpacer(c)}return d=this.renderDigit(),d.querySelector(".odometer-value").innerHTML=a,this.digits.push(d),this.insertDigit(d)},a.prototype.animate=function(a){return p&&"count"!==this.options.animation?this.animateSlide(a):this.animateCount(a)},a.prototype.animateCount=function(a){var c,d,e,f,g,h=this;if(d=+a-this.value)return f=e=u(),c=this.value,(g=function(){var i,j,k;return u()-f>h.options.duration?(h.value=a,h.render(),void z(h.el,"odometerdone")):(i=u()-e,i>b&&(e=u(),k=i/h.options.duration,j=d*k,c+=j,h.render(Math.round(c))),null!=w?w(g):setTimeout(g,b))})()},a.prototype.getDigitCount=function(){var a,b,c,d,e,f;for(d=1<=arguments.length?G.call(arguments,0):[],a=e=0,f=d.length;f>e;a=++e)c=d[a],d[a]=Math.abs(c);return b=Math.max.apply(Math,d),Math.ceil(Math.log(b+1)/Math.log(10))},a.prototype.getFractionalDigitCount=function(){var a,b,c,d,e,f,g;for(e=1<=arguments.length?G.call(arguments,0):[],b=/^\-?\d*\.(\d*?)0*$/,a=f=0,g=e.length;g>f;a=++f)d=e[a],e[a]=d.toString(),c=b.exec(e[a]),e[a]=null==c?0:c[1].length;return Math.max.apply(Math,e)},a.prototype.resetDigits=function(){return this.digits=[],this.ribbons=[],this.inside.innerHTML="",this.resetFormat()},a.prototype.animateSlide=function(a){var b,c,d,f,g,h,i,j,k,l,m,n,o,p,q,s,t,u,v,w,x,y,z,B,C,D,E;if(s=this.value,j=this.getFractionalDigitCount(s,a),j&&(a*=Math.pow(10,j),s*=Math.pow(10,j)),d=a-s){for(this.bindTransitionEnd(),f=this.getDigitCount(s,a),g=[],b=0,m=v=0;f>=0?f>v:v>f;m=f>=0?++v:--v){if(t=A(s/Math.pow(10,f-m-1)),i=A(a/Math.pow(10,f-m-1)),h=i-t,Math.abs(h)>this.MAX_VALUES){for(l=[],n=h/(this.MAX_VALUES+this.MAX_VALUES*b*e),c=t;h>0&&i>c||0>h&&c>i;)l.push(Math.round(c)),c+=n;l[l.length-1]!==i&&l.push(i),b++}else l=function(){E=[];for(var a=t;i>=t?i>=a:a>=i;i>=t?a++:a--)E.push(a);return E}.apply(this);for(m=w=0,y=l.length;y>w;m=++w)k=l[m],l[m]=Math.abs(k%10);g.push(l)}for(this.resetDigits(),D=g.reverse(),m=x=0,z=D.length;z>x;m=++x)for(l=D[m],this.digits[m]||this.addDigit(" ",m>=j),null==(u=this.ribbons)[m]&&(u[m]=this.digits[m].querySelector(".odometer-ribbon-inner")),this.ribbons[m].innerHTML="",0>d&&(l=l.reverse()),o=C=0,B=l.length;B>C;o=++C)k=l[o],q=document.createElement("div"),q.className="odometer-value",q.innerHTML=k,this.ribbons[m].appendChild(q),o===l.length-1&&r(q,"odometer-last-value"),0===o&&r(q,"odometer-first-value");return 0>t&&this.addDigit("-"),p=this.inside.querySelector(".odometer-radix-mark"),null!=p&&p.parent.removeChild(p),j?this.addSpacer(this.format.radix,this.digits[j-1],"odometer-radix-mark"):void 0}},a}(),m.options=null!=(E=window.odometerOptions)?E:{},setTimeout(function(){var a,b,c,d,e;if(window.odometerOptions){d=window.odometerOptions,e=[];for(a in d)b=d[a],e.push(null!=(c=m.options)[a]?(c=m.options)[a]:c[a]=b);return e}},0),m.init=function(){var a,b,c,d,e,f;if(null!=document.querySelectorAll){for(b=document.querySelectorAll(m.options.selector||".odometer"),f=[],c=0,d=b.length;d>c;c++)a=b[c],f.push(a.odometer=new m({el:a,value:null!=(e=a.innerText)?e:a.textContent}));return f}},null!=(null!=(F=document.documentElement)?F.doScroll:void 0)&&null!=document.createEventObject?(D=document.onreadystatechange,document.onreadystatechange=function(){return"complete"===document.readyState&&m.options.auto!==!1&&m.init(),null!=D?D.apply(this,arguments):void 0}):document.addEventListener("DOMContentLoaded",function(){return m.options.auto!==!1?m.init():void 0},!1),"function"==typeof define&&define.amd?define(["jquery"],function(){return m}):"undefined"!=typeof exports&&null!==exports?module.exports=m:window.Odometer=m}).call(this);
+
+// Odometer instance for jar balance
+let jarOd = null;
+
+function initJarOdometer() {
+  const el = document.getElementById('jar-amount');
+  if (!el) return;
+  jarOd = new Odometer({
+    el: el,
+    value: state.jar,
+    format: 'd',
+    theme: 'minimal',
+    duration: 1000
+  });
+}
+
+function updateJarAmount(newValue, animate = false) {
+  if (!jarOd) initJarOdometer();
+  if (!jarOd) return;
+  if (animate) {
+    // Setting innerHTML triggers the Odometer animation (as per docs/demo)
+    jarOd.el.innerHTML = Math.max(0, Math.floor(newValue));
+  } else {
+    jarOd.update(Math.max(0, Math.floor(newValue)));
+  }
 }
 
 function showToast(msg, dur=2500) {
@@ -2148,7 +2295,16 @@ function showToast(msg, dur=2500) {
   t._timeout = setTimeout(() => t.classList.remove('show'), dur);
 }
 
+function updateNavDate() {
+  const el = document.getElementById('nav-date');
+  if (!el) return;
+  const now = new Date();
+  el.textContent = now.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
+}
+
 function renderAll() {
+  checkHabitDailyReset();
+  updateNavDate();
   renderHabits();
   renderInventory();
   renderDropZone();
@@ -2242,10 +2398,11 @@ function doResetProgress() {
   state.lastHabitResetDate = null;
   state.habits.forEach(h => { h.doneToday = 0; delete h.done; });
   localStorage.removeItem(SAVE_KEY);
-  checkHabitDailyReset(); // stamps today's date so habits don't re-reset on next tap
+  checkHabitDailyReset();
   cancelReset();
-  showToast('Progress wiped. Fresh start! 💪');
-  showScreen('dashboard');
+  jarOd = null; updateJarAmount(0, false);
+  showToast("Progress wiped. Fresh start! 💪");
+  showScreen("dashboard");
   renderAll();
 }
 
@@ -2253,6 +2410,7 @@ window.addEventListener('load', () => {
   loadState();
   checkHabitDailyReset();
   renderAll();
+  initJarOdometer();
   drawWheel('wheelCanvas', WHEEL_SEGMENTS, 0, 320);
 
   setTimeout(() => {
