@@ -203,7 +203,7 @@ h2{font-size:1.4rem;font-weight:700;}
   transform:translate(-50%,-183px);
   width:0;height:0;
   border-left:12px solid transparent;border-right:12px solid transparent;
-  border-top:22px solid #fff;
+  border-top:22px solid #E63A46;
   filter:drop-shadow(0 2px 8px rgba(0,0,0,0.8));
   z-index:5;
 }
@@ -291,15 +291,20 @@ h2{font-size:1.4rem;font-weight:700;}
 
 /* CLIP EARNED POPUP */
 .clip-earned-popup{
-  position:fixed;top:50%;left:50%;
-  transform:translate(-50%,-50%) scale(0.5);
+  position:fixed;top:100px;left:50%;
+  transform:translateX(-50%) translateY(-20px);
   z-index:500;pointer-events:none;
-  display:flex;flex-direction:column;align-items:center;gap:8px;
-  opacity:0;transition:all 0.4s cubic-bezier(0.34,1.56,0.64,1);
-  text-align:center;
+  display:flex;align-items:center;gap:12px;
+  background:#0d0f1a;
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:14px;
+  padding:10px 20px 10px 14px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.6);
+  opacity:0;transition:all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  white-space:nowrap;
 }
-.clip-earned-popup.show{transform:translate(-50%,-50%) scale(1);opacity:1;}
-.clip-earned-popup.hide{transform:translate(-50%,-180%) scale(0.7);opacity:0;}
+.clip-earned-popup.show{transform:translateX(-50%) translateY(0);opacity:1;}
+.clip-earned-popup.hide{transform:translateX(-50%) translateY(-20px);opacity:0;transition:all 0.3s ease;}
 
 /* SETUP */
 .setup-input{
@@ -354,6 +359,14 @@ h2{font-size:1.4rem;font-weight:700;}
 #jar-amount.odometer{color:var(--gold);font-family:'Outfit',sans-serif;font-size:2rem;font-weight:800;letter-spacing:-0.02em;line-height:1;}
 .clip.selected svg{filter:drop-shadow(0 0 8px var(--mint));outline:2px solid var(--mint);border-radius:4px;}
 .clip.selected{transform:scale(1.15);}
+/* Long-press undo ring */
+/* Hold-to-undo green fill */
+.habit-undo-fill{
+  position:absolute;inset:0;border-radius:18px;pointer-events:none;
+  background:rgba(0,229,160,0.28);
+  transform-origin:left center;transform:scaleX(0);
+}
+.habit-card{position:relative;overflow:hidden;}
 @keyframes shimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
 .shimmer{
   background:linear-gradient(90deg,transparent,rgba(255,255,255,0.04),transparent);
@@ -422,13 +435,32 @@ h2{font-size:1.4rem;font-weight:700;}
 
   <div style="padding:0 20px 20px;flex:1;display:flex;flex-direction:column;gap:16px;overflow-y:auto;">
 
-    <!-- HABITS -->
-    <div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div style="font-size:0.875rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);">Your Habits</div>
+    <!-- TAB BAR -->
+    <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:12px;">
+      <button id="tab-habits" onclick="switchTab('habits')" style="flex:1;padding:10px;font-family:'Syne',sans-serif;font-size:0.875rem;font-weight:700;background:none;border:none;color:var(--text);border-bottom:2px solid var(--mint);cursor:pointer;">Habits</button>
+      <button id="tab-stats" onclick="switchTab('stats')" style="flex:1;padding:10px;font-family:'Syne',sans-serif;font-size:0.875rem;font-weight:700;background:none;border:none;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;">Stats</button>
+    </div>
+
+    <!-- HABITS PANEL -->
+    <div id="panel-habits">
+      <div style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:10px;">
         <div style="font-size:0.875rem;color:var(--mint);font-weight:700;" id="habits-done-count">0/3 done</div>
       </div>
       <div id="habit-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+
+    <!-- STATS PANEL -->
+    <div id="panel-stats" style="display:none;flex-direction:column;gap:20px;">
+      <!-- Rewards section -->
+      <div>
+        <div style="font-size:0.875rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:10px;">🎟️ Your Rewards</div>
+        <div id="rewards-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+      <!-- Monthly habit grids -->
+      <div style="margin-top:12px;">
+        <div style="font-size:0.875rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:10px;" id="month-grid-label">📅 Month of April</div>
+        <div id="habit-grids" style="display:flex;flex-direction:column;gap:16px;"></div>
+      </div>
     </div>
 
     <!-- CLIP INVENTORY -->
@@ -501,14 +533,7 @@ h2{font-size:1.4rem;font-weight:700;}
     <div style="position:relative;display:inline-block;">
       <canvas id="wheelCanvas" width="320" height="320"></canvas>
       <div class="wheel-pointer" id="wheel-pointer"></div>
-      <div class="wheel-center"></div>
     </div>
-    <button id="main-spin-btn" class="btn btn-primary" style="width:100%;max-width:280px;margin-top:24px;font-size:1.1rem;font-weight:800;" onclick="spinMainWheel()">
-      SPIN!
-    </button>
-    <button class="btn btn-ghost" style="width:100%;max-width:280px;margin-top:8px;font-size:0.875rem;opacity:0.5;" onclick="triggerBonus()">
-      ⚡ [TEST] Trigger Bonus
-    </button>
   </div>
 </div>
 
@@ -526,9 +551,8 @@ h2{font-size:1.4rem;font-weight:700;}
 
     <!-- Bonus Wheel — centred, same as main wheel -->
     <div style="position:relative;display:inline-block;flex-shrink:0;">
-      <canvas id="bonusCanvas" width="260" height="260"></canvas>
-      <div class="wheel-pointer" style="transform:translate(-50%,-150px);border-left:9px solid transparent;border-right:9px solid transparent;border-top:17px solid #fff;"></div>
-      <div class="wheel-center" style="width:28px;height:28px;"></div>
+      <canvas id="bonusCanvas" width="320" height="320"></canvas>
+      <div class="wheel-pointer" style="transform:translate(-50%,-183px);border-left:12px solid transparent;border-right:12px solid transparent;border-top:22px solid #E63A46;"></div>
     </div>
 
     <!-- Status text (below wheel) -->
@@ -554,7 +578,7 @@ h2{font-size:1.4rem;font-weight:700;}
 <!-- ============ SCREEN: SETUP ============ -->
 <div id="screen-setup" class="screen">
   <div class="topbar">
-    <button class="back-btn" onclick="saveSetup()" style="width:auto;padding:0 14px;font-size:0.875rem;font-weight:700;">Back</button>
+    <button id="setup-back-btn" class="back-btn" onclick="saveSetup()" style="width:auto;padding:0 14px;font-size:0.875rem;font-weight:700;">Back</button>
     <div style="font-size:1rem;font-weight:700;">Setup</div>
     <div style="width:60px;"></div>
   </div>
@@ -654,9 +678,8 @@ h2{font-size:1.4rem;font-weight:700;}
 
 <!-- CLIP EARNED POPUP -->
 <div id="clip-popup" class="clip-earned-popup">
-  <div style="font-size:3rem;" id="popup-clip-icon"></div>
-  <div style="font-size:1.1rem;font-weight:800;color:var(--mint);">Clip Earned!</div>
-  <div style="font-size:0.875rem;color:var(--muted);" id="popup-clip-color"></div>
+  <div style="width:36px;height:50px;flex-shrink:0;" id="popup-clip-icon"></div>
+  <div style="font-size:0.95rem;font-weight:800;color:var(--text);">Clip Earned!</div>
 </div>
 
 <!-- TOAST -->
@@ -703,6 +726,10 @@ let state = {
   spinClipCosts: [],
   originalSubmittedClips: [],
   currentSpinTier: null,
+  pendingBonusTierReward: null,
+  wonRewards: [],        // [{id, reward, tier, date, redeemed, redeemedDate}]
+  wonRewardIdCounter: 1,
+  habitHistory: {},      // {habitId: {'2026-04-28': completions}}
   spinning: false,
   lastResult: null,
   streak: 0,
@@ -803,20 +830,19 @@ function playSound(name) {
 // ==========================================
 // WHEEL SETUP
 // ==========================================
-const WHEEL_SEGMENTS = [
-  {label:'TIER 1', type:'T1', color:'#c0392b', textColor:'#fff'},
-  {label:'TIER 2', type:'T2', color:'#e67e22', textColor:'#fff'},
-  {label:'TIER 1', type:'T1', color:'#e74c3c', textColor:'#fff'},
-  {label:'TIER 3', type:'T3', color:'#2980b9', textColor:'#fff'},
-  {label:'BONUS',  type:'BONUS', color:'#7d3c98', textColor:'#fff'},
-  {label:'TIER 2', type:'T2', color:'#d35400', textColor:'#fff'},
-  {label:'TIER 1', type:'T1', color:'#c0392b', textColor:'#fff'},
-  {label:'JACKPOT',type:'JACKPOT', color:'#b7950b', textColor:'#000'},
-  {label:'TIER 2', type:'T2', color:'#ca6f1e', textColor:'#fff'},
-  {label:'TIER 1', type:'T1', color:'#e74c3c', textColor:'#fff'},
-  {label:'TIER 3', type:'T3', color:'#1a5276', textColor:'#fff'},
-  {label:'TIER 2', type:'T2', color:'#e67e22', textColor:'#fff'},
-];
+const WHEEL_SEGMENTS = (function(){
+  // 30 slots: 12×T1, 9×T2, 6×T3, 1×Jackpot, 2×Bonus
+  // Alternated roulette-style so adjacent segments differ
+  const layout = [
+    'T1','T2','T1','T3','T1','T2','T1','T2','T1','T3',
+    'T1','T2','T1','BONUS','T1','T3','T1','T2','JACKPOT','T2',
+    'T1','T3','T2','T1','T3','T2','T1','BONUS','T2','T1'
+  ];
+  const colors  = {T1:'#121217', T2:'#2A2933', T3:'#4A4B56', JACKPOT:'#F5B700', BONUS:'#FFFFFF'};
+  const texts   = {T1:'#FFFFFF', T2:'#FFFFFF', T3:'#FFFFFF', JACKPOT:'#000000', BONUS:'#000000'};
+  const labels  = {T1:'T1', T2:'T2', T3:'T3', JACKPOT:'JACKPOT', BONUS:'BONUS'};
+  return layout.map(t => ({label:labels[t], type:t, color:colors[t], textColor:texts[t]}));
+})();
 
 let wheelRotation = 0;
 let isSpinning = false;
@@ -911,9 +937,6 @@ function spinMainWheel() {
   const spinEntry = state.spinQueue.shift();
   state.currentSpinTier = spinEntry.tier;
   renderWheelQueueUI();
-
-  const mainSpinBtn = document.getElementById('main-spin-btn');
-  mainSpinBtn.disabled = true;
 
   // Determine result clamped to this spin's tier
   let result = getWeightedResult(state.currentSpinTier);
@@ -1019,43 +1042,23 @@ function drawWheel(canvasId, segments, rotation, size) {
     ctx.fillStyle = 'rgba(255,255,255,0.04)';
     ctx.fill();
 
-    // Text — white stroke first, then fill
+    // Text
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(startAngle + arc / 2);
     ctx.textAlign = 'right';
     const fontSize = size > 280 ? 11 : 9;
     ctx.font = `bold ${fontSize}px Syne, sans-serif`;
-    ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-    ctx.lineWidth = 3;
-    ctx.lineJoin = 'round';
-    ctx.strokeText(seg.label, r - 10, 4);
-    ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = 'rgba(0,0,0,0.6)';
-    ctx.shadowBlur = 3;
+    ctx.fillStyle = seg.textColor || '#fff';
     ctx.fillText(seg.label, r - 10, 4);
     ctx.restore();
   }
 
-  // Segment dots at edges
-  for (let i = 0; i < segments.length; i++) {
-    const angle = rotation + i * arc - Math.PI / 2;
-    const dotX = cx + Math.cos(angle) * (r - 2);
-    const dotY = cy + Math.sin(angle) * (r - 2);
-    ctx.beginPath();
-    ctx.arc(dotX, dotY, 3, 0, 2 * Math.PI);
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.fill();
-  }
-
-  // Center circle
+  // Center circle (solid, no stroke)
   ctx.beginPath();
   ctx.arc(cx, cy, size > 280 ? 18 : 14, 0, 2 * Math.PI);
   ctx.fillStyle = '#0a0b12';
   ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
 }
 
 
@@ -1108,14 +1111,41 @@ function highlightWinningSegment(result, segIndex, onDone) {
 function showNearMiss(cb) { cb(); } // no-op, kept for safety
 
 function showResult(result) {
-  // BONUS: skip overlay entirely, jump straight to bonus screen
+  const overlay = document.getElementById('result-overlay');
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)] || '—';
+
   if (result === 'BONUS') {
-    triggerBonus();
+    // Store the tier reward for this spin (free reward on bonus)
+    const tierKey = {T1:'t1', T2:'t2', T3:'t3'}[state.currentSpinTier] || 't1';
+    state.pendingBonusTierReward = pick(state.rewards[tierKey]);
+
+    // Save the free tier reward as a raffle ticket
+    saveWonReward(state.pendingBonusTierReward, state.currentSpinTier || 'T1');
+
+    document.getElementById('result-emoji').textContent = '⚡';
+    document.getElementById('result-title').textContent = 'BONUS ROUND!';
+    document.getElementById('result-tier-badge').className = 'tier-badge tier-bonus';
+    document.getElementById('result-tier-badge').textContent = 'BONUS';
+    document.getElementById('result-reward-text').textContent = `Free reward: ${state.pendingBonusTierReward}`;
+
+    const contBtn = document.getElementById('btn-continue-spin');
+    contBtn.textContent = 'Spin Bonus Wheel →';
+    contBtn.onclick = () => {
+      overlay.classList.remove('active');
+      contBtn.onclick = claimResult; // restore for next time
+      triggerBonus();
+    };
+    document.querySelector('[onclick="claimAndExit()"]').style.display = 'none';
+
+    overlay.classList.add('active');
+    playSound('bonus');
     return;
   }
 
-  const overlay = document.getElementById('result-overlay');
-  const pick = arr => arr[Math.floor(Math.random() * arr.length)] || '—';
+  // Restore exit button in case it was hidden
+  const exitBtn = document.querySelector('[onclick="claimAndExit()"]');
+  if (exitBtn) exitBtn.style.display = '';
+
   const resultMap = {
     'T1':     {emoji:'🎲', title:'TIER 1 WIN!',  reward: pick(state.rewards.t1),      badge:'tier-1',      badgeText:'Tier 1',  sound:'win-t1'},
     'T2':     {emoji:'🎯', title:'TIER 2 WIN!',  reward: pick(state.rewards.t2),      badge:'tier-2',      badgeText:'Tier 2',  sound:'win-t2'},
@@ -1129,6 +1159,9 @@ function showResult(result) {
   document.getElementById('result-reward-text').textContent = info.reward;
   document.getElementById('result-tier-badge').className = `tier-badge ${info.badge}`;
   document.getElementById('result-tier-badge').textContent = info.badgeText;
+
+  // Save to raffle tickets
+  saveWonReward(info.reward, result);
 
   overlay.classList.add('active');
   playSound(info.sound);
@@ -1200,7 +1233,11 @@ function triggerBonus() {
   document.getElementById('bonus-result-card').style.display = 'none';
   document.getElementById('bonus-timer-wrap').style.display = 'none';
   document.getElementById('bonus-actions').innerHTML = '';
-  setBonusStatus('Spinning the bonus wheel...');
+
+  // Show the free tier reward at top
+  const freeReward = state.pendingBonusTierReward;
+  setBonusStatus(freeReward ? `🎁 Free: ${freeReward} — now spin for more!` : 'Spinning the bonus wheel...');
+
   drawBonusWheel(bonusWheelRotation);
   setTimeout(() => runBonusSpin(false), 700);
 }
@@ -1382,22 +1419,24 @@ function giveUpBonus() {
 }
 
 // BONUS WHEEL
-const BONUS_SEGMENTS = [
-  {label:'75%', type:'75', color:'#c0392b', textColor:'#fff'},
-  {label:'FREE!', type:'FREE', color:'#27ae60', textColor:'#fff'},
-  {label:'50%', type:'50', color:'#e67e22', textColor:'#fff'},
-  {label:'EXTRA', type:'EXTRA', color:'#8e44ad', textColor:'#fff'},
-  {label:'25%', type:'25', color:'#2980b9', textColor:'#fff'},
-  {label:'FREE!', type:'FREE', color:'#27ae60', textColor:'#fff'},
-  {label:'75%', type:'75', color:'#c0392b', textColor:'#fff'},
-  {label:'50%', type:'50', color:'#e67e22', textColor:'#fff'},
-];
+const BONUS_SEGMENTS = (function(){
+  // 20 slots reflecting probabilities: 75%(35%), Extra(25%), 25%(15%), 50%(15%), Free(10%)
+  // 7 + 5 + 3 + 3 + 2 = 20
+  const layout = [
+    '75','EXTRA','75','25','75','50','75','EXTRA','75','FREE',
+    '75','EXTRA','75','50','EXTRA','25','75','EXTRA','FREE','25'
+  ];
+  const colors = {'75':'#E63A46','EXTRA':'#F5B700','25':'#FFFFFF','50':'#6A4CFF','FREE':'#4ECB71'};
+  const texts  = {'75':'#FFFFFF','EXTRA':'#000000','25':'#000000','50':'#FFFFFF','FREE':'#000000'};
+  const labels = {'75':'75%','EXTRA':'EXTRA','25':'25%','50':'50%','FREE':'FREE'};
+  return layout.map(t => ({label:labels[t], type:t, color:colors[t], textColor:texts[t]}));
+})();
 
 let bonusWheelRotation = 0;
 let isBonusSpinning = false;
 
 function drawBonusWheel(rotation) {
-  drawWheel('bonusCanvas', BONUS_SEGMENTS, rotation, 260);
+  drawWheel('bonusCanvas', BONUS_SEGMENTS, rotation, 320);
 }
 
 function startBonusTimer() {
@@ -1451,6 +1490,7 @@ function completeHabit(id) {
 
   habit.doneToday = doneToday + 1;
   state.habitsCompletedTotal = (state.habitsCompletedTotal || 0) + 1;
+  recordHabitHistory(habit.id, habit.doneToday);
 
   const newClip = Math.random() < 0.05 ? CLIP_GOLD : CLIP_COLORS[Math.floor(Math.random() * CLIP_COLORS.length)];
   state.clips.push(newClip);
@@ -1476,18 +1516,13 @@ function checkHabitDailyReset() {
 
 function showClipPopup(color) {
   const popup = document.getElementById('clip-popup');
-  const icon = document.getElementById('popup-clip-icon');
-  const label = document.getElementById('popup-clip-color');
-  
+  const icon  = document.getElementById('popup-clip-icon');
   icon.innerHTML = createClipSVG(color);
-  label.textContent = CLIP_LABELS[color];
-  
   popup.classList.remove('hide');
   popup.classList.add('show');
-  
   setTimeout(() => {
     popup.classList.add('hide');
-    setTimeout(() => popup.classList.remove('show', 'hide'), 500);
+    setTimeout(() => popup.classList.remove('show', 'hide'), 350);
   }, 1800);
 }
 
@@ -1917,6 +1952,7 @@ function renderHabits() {
     const fullyDone   = doneToday >= timesPerDay;
     const card = document.createElement('div');
     card.className = `habit-card ${fullyDone ? 'done' : ''}`;
+    card.style.position = 'relative';
     card.onclick = () => completeHabit(h.id);
 
     const progressPips = timesPerDay > 1
@@ -1934,14 +1970,85 @@ function renderHabits() {
     card.innerHTML = `
       <div class="habit-icon" style="background:rgba(255,255,255,0.06);">${h.icon}</div>
       <div style="flex:1;min-width:0;">
-        <div style="font-weight:700;font-size:0.9rem;">${h.name}</div>
+        <div class="habit-title" style="font-weight:700;font-size:0.9rem;">${h.name}</div>
         <div style="font-size:0.875rem;color:var(--muted);margin-top:2px;">${h.task}</div>
         ${progressPips}
       </div>
       <div class="habit-check" style="${fullyDone ? '' : timesPerDay > 1 ? 'font-size:0.875rem;' : ''}">${checkContent}</div>
+      ${doneToday > 0 ? '<div class="habit-undo-fill"></div>' : ''}
     `;
     list.appendChild(card);
+
+    // Long-press undo on cards with at least 1 completion
+    if (doneToday > 0) {
+      setupHoldUndo(card, h.id);
+    }
   });
+}
+
+function setupHoldUndo(card, habitId) {
+  let rafId = null;
+  let startTime = null;
+  const HOLD_MS = 2000;
+  const fill = card.querySelector('.habit-undo-fill');
+  const title = card.querySelector('.habit-title');
+  const origTitle = title ? title.textContent : '';
+
+  function startHold(e) {
+    if (e.button !== undefined && e.button !== 0) return;
+    e.preventDefault();
+    startTime = Date.now();
+    if (title) title.textContent = 'Hold to undo';
+
+    function frame() {
+      const pct = Math.min((Date.now() - startTime) / HOLD_MS, 1);
+      if (fill) fill.style.transform = `scaleX(${pct})`;
+      if (pct < 1) {
+        rafId = requestAnimationFrame(frame);
+      } else {
+        // Flash white then undo
+        if (fill) fill.style.background = 'rgba(0,229,160,0.6)';
+        setTimeout(() => { undoHabit(habitId); }, 80);
+      }
+    }
+    rafId = requestAnimationFrame(frame);
+  }
+
+  function cancelHold() {
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    if (fill) fill.style.transform = 'scaleX(0)';
+    if (title) title.textContent = origTitle;
+    startTime = null;
+  }
+
+  card.addEventListener('pointerdown', startHold, {passive: false});
+  card.addEventListener('pointerup', cancelHold);
+  card.addEventListener('pointercancel', cancelHold);
+  card.addEventListener('pointermove', (e) => {
+    if (rafId && (Math.abs(e.movementX || 0) > 8 || Math.abs(e.movementY || 0) > 8)) cancelHold();
+  });
+}
+
+function undoHabit(id) {
+  initAudio();
+  const habit = state.habits.find(h => h.id === id);
+  if (!habit || (habit.doneToday || 0) === 0) return;
+
+  // Remove last clip earned — only if clips are available in inventory
+  if (state.clips.length === 0) {
+    showToast("Can't undo — clips already used for spins!", 3000);
+    renderHabits();
+    return;
+  }
+
+  habit.doneToday = Math.max(0, (habit.doneToday || 1) - 1);
+  state.habitsCompletedTotal = Math.max(0, (state.habitsCompletedTotal || 1) - 1);
+  state.clips.pop(); // remove last clip
+
+  playSound('drop');
+  showToast('Habit unchecked. Clip removed.');
+  saveState();
+  renderAll();
 }
 
 // ==========================================
@@ -2123,10 +2230,39 @@ function renderHabitSetup() {
 }
 
 function cycleIcon(i) {
-  const icons = ['💪','📚','💻','🏃','🎨','🎵','🧘','✍️','🔬','💡','🍎','☕','🌱','⚡','🎯'];
-  const cur = icons.indexOf(state.habits[i].icon);
-  state.habits[i].icon = icons[(cur + 1) % icons.length];
-  renderHabitSetup();
+  // Use native emoji picker via hidden emoji input
+  let picker = document.getElementById('emoji-picker-input');
+  if (!picker) {
+    picker = document.createElement('input');
+    picker.id = 'emoji-picker-input';
+    picker.type = 'text';
+    picker.inputMode = 'emoji'; // triggers emoji keyboard on mobile
+    picker.style.cssText = 'position:fixed;opacity:0;pointer-events:none;left:50%;top:50%;width:1px;height:1px;';
+    document.body.appendChild(picker);
+  }
+  picker.value = '';
+  picker._habitIndex = i;
+  picker.oninput = () => {
+    const val = picker.value.trim();
+    if (val) {
+      // Take first grapheme cluster (emoji or char)
+      const chars = [...val];
+      state.habits[picker._habitIndex].icon = chars[0];
+      markSetupDirty();
+      renderHabitSetup();
+      picker.value = '';
+    }
+  };
+  picker.focus();
+  // On desktop fall back to cycling through icons
+  if (!('ontouchstart' in window)) {
+    picker.blur();
+    const icons = ['💪','📚','💻','🏃','🎨','🎵','🧘','✍️','🔬','💡','🍎','☕','🌱','⚡','🎯','🏋️','🚴','🧠','💰','🎤'];
+    const cur = icons.indexOf(state.habits[i].icon);
+    state.habits[i].icon = icons[(cur + 1) % icons.length];
+    markSetupDirty();
+    renderHabitSetup();
+  }
 }
 
 
@@ -2134,6 +2270,11 @@ function removeHabit(i) {
   if (state.habits.length <= 1) { showToast('Need at least 1 habit!'); return; }
   state.habits.splice(i, 1);
   renderHabitSetup();
+}
+
+function markSetupDirty() {
+  const btn = document.getElementById('setup-back-btn');
+  if (btn) btn.textContent = 'Save & Back';
 }
 
 function saveSetup() {
@@ -2145,7 +2286,7 @@ function saveSetup() {
   });
   const jcr = document.getElementById('jar-complete-reward');
   if (jcr && jcr.value) state.jarCompleteReward = jcr.value;
-  // habitsPerDay is updated live via adjustHabitsPerDay
+  saveSettings(); // persist habits/goals/rewards independently of progress
   saveState();
   showScreen('dashboard');
   renderAll();
@@ -2188,9 +2329,6 @@ function showScreen(name) {
     calculateTier();
     drawWheel('wheelCanvas', WHEEL_SEGMENTS, wheelRotation, 320);
     renderWheelQueueUI();
-    const spinBtn = document.getElementById('main-spin-btn');
-    spinBtn.disabled = state.spinQueue.length === 0 || isSpinning;
-    spinBtn.textContent = state.spinQueue.length === 0 ? 'No Spins Left' : 'SPIN!';
     const contBtn = document.getElementById('btn-continue-spin');
     if (contBtn) contBtn.textContent = state.spinQueue.length > 1 ? 'Continue Spin' : 'Continue';
   }
@@ -2199,6 +2337,15 @@ function showScreen(name) {
   }
   if (name === 'setup') {
     renderSetup();
+    // Reset dirty state when opening
+    document.getElementById('setup-back-btn').textContent = 'Back';
+    // Mark dirty on any input change
+    setTimeout(() => {
+      const setupEl = document.getElementById('screen-setup');
+      setupEl.querySelectorAll('input').forEach(inp => {
+        inp.addEventListener('input', markSetupDirty, {once: false});
+      });
+    }, 100);
   }
   
   window.scrollTo(0, 0);
@@ -2302,6 +2449,176 @@ function updateNavDate() {
   el.textContent = now.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
 }
 
+// ==========================================
+// TAB SYSTEM
+// ==========================================
+let activeTab = 'habits';
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('panel-habits').style.display = tab === 'habits' ? '' : 'none';
+  document.getElementById('panel-stats').style.display  = tab === 'stats'  ? '' : 'none';
+  document.getElementById('tab-habits').style.color = tab === 'habits' ? 'var(--text)' : 'var(--muted)';
+  document.getElementById('tab-stats').style.color  = tab === 'stats'  ? 'var(--text)' : 'var(--muted)';
+  document.getElementById('tab-habits').style.borderBottomColor = tab === 'habits' ? 'var(--mint)' : 'transparent';
+  document.getElementById('tab-stats').style.borderBottomColor  = tab === 'stats'  ? 'var(--mint)' : 'transparent';
+  if (tab === 'stats') { renderRewardsPanel(); renderHabitGrids(); }
+}
+
+// ==========================================
+// REWARD TRACKING
+// ==========================================
+function saveWonReward(rewardText, tier) {
+  state.wonRewards.push({
+    id: state.wonRewardIdCounter++,
+    reward: rewardText,
+    tier,
+    date: new Date().toISOString(),
+    redeemed: false,
+    redeemedDate: null
+  });
+  saveState();
+}
+
+function redeemReward(id) {
+  const r = state.wonRewards.find(r => r.id === id);
+  if (!r || r.redeemed) return;
+  r.redeemed = true;
+  r.redeemedDate = new Date().toISOString();
+  playSound('drop');
+  saveState();
+  renderRewardsPanel();
+}
+
+function cleanOldRewards() {
+  // Remove redeemed rewards from previous days
+  const today = new Date().toDateString();
+  state.wonRewards = state.wonRewards.filter(r => {
+    if (!r.redeemed) return true;
+    return new Date(r.redeemedDate).toDateString() === today;
+  });
+}
+
+function renderRewardsPanel() {
+  cleanOldRewards();
+  const list = document.getElementById('rewards-list');
+  if (!list) return;
+  const active = state.wonRewards.filter(r => !r.redeemed);
+  const used   = state.wonRewards.filter(r => r.redeemed);
+  const all = [...active, ...used];
+
+  if (all.length === 0) {
+    list.innerHTML = `<div style="text-align:center;color:var(--muted);padding:24px;font-size:0.875rem;">No rewards yet — spin the wheel to earn some!</div>`;
+    return;
+  }
+
+  const tierColors = {T1:'#ef4444',T2:'#f97316',T3:'#4b7cf7',JACKPOT:'#f8b722',BONUS:'#a855f7'};
+  list.innerHTML = all.map(r => {
+    const color = tierColors[r.tier] || 'var(--muted)';
+    const dateStr = new Date(r.date).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    return `
+      <div onclick="${r.redeemed ? '' : `redeemReward(${r.id})`}" style="
+        display:flex;align-items:stretch;border-radius:14px;overflow:hidden;
+        opacity:${r.redeemed ? 0.45 : 1};
+        cursor:${r.redeemed ? 'default' : 'pointer'};
+        background:var(--card);border:1px solid ${r.redeemed ? 'var(--border)' : color+'33'};
+        transition:opacity 0.3s;
+        ${r.redeemed ? '' : 'box-shadow:0 2px 12px '+color+'22;'}
+      ">
+        <!-- Ticket stub (left colored bar) -->
+        <div style="width:10px;background:${r.redeemed ? 'var(--muted)' : color};flex-shrink:0;"></div>
+        <!-- Perforated edge -->
+        <div style="width:14px;background:var(--card);flex-shrink:0;
+          background-image:radial-gradient(circle at 0 50%, var(--bg) 5px, transparent 5px);"></div>
+        <!-- Ticket body -->
+        <div style="flex:1;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+          <div>
+            <div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:${r.redeemed ? 'var(--muted)' : color};margin-bottom:3px;">${r.tier}</div>
+            <div style="font-size:0.9rem;font-weight:700;color:${r.redeemed ? 'var(--muted)' : 'var(--text)'};">${r.reward}</div>
+            <div style="font-size:0.75rem;color:var(--muted);margin-top:2px;">${dateStr}</div>
+          </div>
+          <div style="flex-shrink:0;font-size:0.75rem;font-weight:700;
+            padding:6px 12px;border-radius:50px;
+            background:${r.redeemed ? 'rgba(255,255,255,0.05)' : color+'22'};
+            color:${r.redeemed ? 'var(--muted)' : color};
+            border:1px solid ${r.redeemed ? 'var(--border)' : color+'44'};">
+            ${r.redeemed ? 'USED' : 'TAP TO USE'}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ==========================================
+// MONTHLY HABIT GRIDS
+// ==========================================
+const HABIT_COLORS = ['#4b7cf7','#00e5a0','#f97316','#a855f7','#ec4899','#f8b722','#ef4444','#22c55e'];
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function recordHabitHistory(habitId, completions) {
+  if (!state.habitHistory) state.habitHistory = {};
+  if (!state.habitHistory[habitId]) state.habitHistory[habitId] = {};
+  state.habitHistory[habitId][todayKey()] = completions;
+}
+
+function renderHabitGrids() {
+  const container = document.getElementById('habit-grids');
+  if (!container) return;
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthName = now.toLocaleDateString('en-US', {month:'long'});
+
+  // Update label
+  const label = document.getElementById('month-grid-label');
+  if (label) label.textContent = `📅 Month of ${monthName}`;
+
+  container.innerHTML = state.habits.map((h, hi) => {
+    const color = HABIT_COLORS[hi % HABIT_COLORS.length];
+    const history = (state.habitHistory || {})[h.id] || {};
+    const timesPerDay = h.timesPerDay || 1;
+
+    const cells = Array.from({length: daysInMonth}, (_, idx) => {
+      const dayNum = idx + 1;
+      const dateKey = `${year}-${String(month+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+      const isToday = dateKey === todayKey();
+      const done = history[dateKey] || 0;
+
+      // 10-step gradient: ratio 0→1 maps to opacity 0.07→1.0
+      const ratio = Math.min(done / timesPerDay, 1);
+      const step = Math.ceil(ratio * 10); // 0–10
+      const opacity = step === 0 ? 0 : 0.07 + (step / 10) * 0.93;
+      const bg = step === 0 ? 'rgba(255,255,255,0.07)' : color;
+
+      return `<div style="
+        width:12px;height:12px;border-radius:2px;
+        background:${bg};opacity:${step === 0 ? 1 : opacity};
+        flex-shrink:0;
+        ${isToday ? 'outline:1.5px solid rgba(255,255,255,0.7);outline-offset:1px;' : ''}
+      " title="Day ${dayNum}${done ? ': '+done+'/'+timesPerDay : ''}"></div>`;
+    }).join('');
+
+    return `
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <span style="font-size:1rem;">${h.icon}</span>
+          <span style="font-size:0.875rem;font-weight:700;">${h.name}</span>
+          <span style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;"></span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:3px;">
+          ${cells}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
 function renderAll() {
   checkHabitDailyReset();
   updateNavDate();
@@ -2332,46 +2649,81 @@ function renderAll() {
 // LOCALSTORAGE PERSISTENCE
 // ==========================================
 const SAVE_KEY = 'habitspin_v1';
+const SETTINGS_KEY = 'habitspin_settings_v1';
 
-function saveState() {
+function saveSettings() {
   try {
-    const toSave = {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify({
       habits: state.habits,
-      lastHabitResetDate: state.lastHabitResetDate,
-      clips: state.clips,
-      jar: state.jar,
       jarGoals: state.jarGoals,
       jarGoalIdCounter: state.jarGoalIdCounter,
       jarCompleteReward: state.jarCompleteReward,
+      rewards: state.rewards
+    }));
+  } catch(e) { console.warn('Settings save failed:', e); }
+}
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    if (s.habits) state.habits = s.habits;
+    if (s.jarGoals) state.jarGoals = s.jarGoals;
+    if (s.jarGoalIdCounter) state.jarGoalIdCounter = s.jarGoalIdCounter;
+    if (s.jarCompleteReward) state.jarCompleteReward = s.jarCompleteReward;
+    if (s.rewards) {
+      state.rewards = { ...state.rewards, ...s.rewards };
+      ['t1','t2','t3','jackpot'].forEach(k => {
+        if (typeof state.rewards[k] === 'string') state.rewards[k] = [state.rewards[k]];
+      });
+    }
+    return true;
+  } catch(e) { console.warn('Settings load failed:', e); return false; }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      habits: state.habits,       // includes doneToday / lastHabitResetDate per habit
+      lastHabitResetDate: state.lastHabitResetDate,
+      clips: state.clips,
+      jar: state.jar,
       jarJourney: state.jarJourney,
       streak: state.streak,
-      rewards: state.rewards,
-      habitsCompletedTotal: state.habitsCompletedTotal || 0
-    };
-    localStorage.setItem(SAVE_KEY, JSON.stringify(toSave));
+      habitsCompletedTotal: state.habitsCompletedTotal || 0,
+      wonRewards: state.wonRewards || [],
+      wonRewardIdCounter: state.wonRewardIdCounter || 1,
+      habitHistory: state.habitHistory || {}
+    }));
+    saveSettings(); // always keep settings in sync too
   } catch(e) { console.warn('Save failed:', e); }
 }
 
 function loadState() {
   try {
+    // Load settings first (habits, goals, rewards)
+    loadSettings();
+    // Then overlay progress
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return false;
     const saved = JSON.parse(raw);
-    state.habits = saved.habits || state.habits;
+    // Merge doneToday back onto habits (settings already loaded habit definitions)
+    if (saved.habits) {
+      saved.habits.forEach(sh => {
+        const h = state.habits.find(h => h.id === sh.id);
+        if (h) { h.doneToday = sh.doneToday || 0; }
+      });
+    }
     state.lastHabitResetDate = saved.lastHabitResetDate || null;
     state.clips = saved.clips || [];
     state.jar = saved.jar || 0;
-    state.jarGoals = saved.jarGoals || state.jarGoals;
-    state.jarGoalIdCounter = saved.jarGoalIdCounter || 4;
-    state.jarCompleteReward = saved.jarCompleteReward || state.jarCompleteReward;
     state.jarJourney = saved.jarJourney || 0;
     state.streak = saved.streak || 0;
-    state.rewards = { ...state.rewards, ...saved.rewards };
-    // Migrate old single-string rewards to arrays
-    ['t1','t2','t3','jackpot'].forEach(k => {
-      if (typeof state.rewards[k] === 'string') state.rewards[k] = [state.rewards[k]];
-    });
     state.habitsCompletedTotal = saved.habitsCompletedTotal || 0;
+    state.wonRewards = saved.wonRewards || [];
+    state.wonRewardIdCounter = saved.wonRewardIdCounter || 1;
+    state.habitHistory = saved.habitHistory || {};
     return true;
   } catch(e) { console.warn('Load failed:', e); return false; }
 }
@@ -2387,6 +2739,7 @@ function cancelReset() {
 }
 
 function doResetProgress() {
+  // Keep habits definitions, goals, rewards — only reset progress
   state.clips = [];
   state.submittedClips = [];
   state.jar = 0;
@@ -2396,15 +2749,23 @@ function doResetProgress() {
   state.currentSpinTier = null;
   state.habitsCompletedTotal = 0;
   state.lastHabitResetDate = null;
-  state.habits.forEach(h => { h.doneToday = 0; delete h.done; });
+  state.habits.forEach(h => { h.doneToday = 0; });
   localStorage.removeItem(SAVE_KEY);
+  // Settings (habits/goals/rewards) deliberately NOT removed
   checkHabitDailyReset();
   cancelReset();
   jarOd = null; updateJarAmount(0, false);
-  showToast("Progress wiped. Fresh start! 💪");
-  showScreen("dashboard");
+  showToast('Progress wiped. Fresh start! 💪');
+  showScreen('dashboard');
   renderAll();
 }
+
+// Select all text on focus so users can type to replace, or click to reposition
+document.addEventListener('focusin', (e) => {
+  if (e.target.classList.contains('setup-input') && e.target.type !== 'number') {
+    e.target.select();
+  }
+});
 
 window.addEventListener('load', () => {
   loadState();
